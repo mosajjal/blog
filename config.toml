@@ -1,7 +1,7 @@
 baseurl = "https://mosajjal.gitlab.io/n0p-blog"
 languageCode = "en-us"
 theme = "terminal"
-paginate = 5
+paginate = 10
 
 [params]
   contentTypeName = "post"
@@ -12,8 +12,8 @@ paginate = 5
 
 [languages]
   [languages.en]
-    title = "Terminal"
-    subtitle = "A simple, retro theme for Hugo"
+    title = "n0p blog"
+    subtitle = "Ali Mosajjal's Blog"
     keywords = ""
     copyright = ""
     menuMore = "Show more"
@@ -21,7 +21,7 @@ paginate = 5
     readOtherPosts = "Read other posts"
 
     [languages.en.params.logo]
-      logoText = "Terminal"
+      logoText = "n0p"
       logoHomeLink = "/"
 
     [languages.en.menu]
