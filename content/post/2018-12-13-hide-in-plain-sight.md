@@ -3,7 +3,6 @@ layout: post
 title:  "Hide in Plain Sight: Protocol Multiplexers and Optional Authentication"
 comments: true
 aliases: [/2018-12-13-hide-in-plain-sight]
-image: 'https://n0p.me/static/img/hide-in-plain-sight/meme.jpeg'
 date:   2018-12-13 18:18:00
 tags:
 - Linux
@@ -16,7 +15,6 @@ categories:
 - Learn Linux 
 ---
 
-<img src="{{ "/static/img/hide-in-plain-sight/meme.jpeg" }}" alt="">
 ![test](/img/hide-in-plain-sight/meme.jpeg)
 
 Almost every Internet-connected device on the planet comes with a nice web interface to interact with. And some of them like routers and APs come with their own little firewall to prevent backdoors and whatnot. So what if one of these devices or even servers gets compromised? Where do you look at to find IoC (indication of compromise) in them?
@@ -33,13 +31,13 @@ I want to show you two methods that you must be aware of if you're hunting for t
 
 Have you seen those annoying old school basic authentication schemes (which are rarely used nowadays) in very old devices? The auth pop-up is handled by the browser and if it's successful, you're redirected to the page and if you're not, you'd get a 401 error. 
 
-<img src="https://crossbrowsertesting.com/images/faq/basic-auth-example.png" alt="">
+![Basic Authentication](https://crossbrowsertesting.com/images/faq/basic-auth-example.png)
 
 So how does your browser knows it's time for authentication? It's pretty simple. when you create a page with basic auth, the first time you do a GET request, your browser is greeted with a 40x and a `www-authenticate` message. This way, your browser pops up a dialog and asks for credentials. But here's where it gets very interesting. What if the server doesn't send that `www-authenticate` message? What if the server responds with a 200 with some content. In fact, what if the server responds normally to it and shows you the website? 
 
-You might suggest that okay, what is the point then? You just described a regular visit to a website with the excitement of a 5-year-old. So what? Here's where it gets really cool. What if, the server offers TWO 200 responses, one for giving it auth, one for no-auth page handling. Let me explain, I wrote a simple <a href="https://bottlepy.org">`bottle`</a> code to demonstrate this. 
+You might suggest that okay, what is the point then? You just described a regular visit to a website with the excitement of a 5-year-old. So what? Here's where it gets really cool. What if, the server offers TWO 200 responses, one for giving it auth, one for no-auth page handling. Let me explain, I wrote a simple [Bottle](https://bottlepy.org) code to demonstrate this. 
 
-{% highlight python %}
+```py
 from bottle import route, run, request
 
 def check(user, pw):
@@ -66,7 +64,7 @@ def index():
     return "Regular old website"
 
 run(host='localhost', port=8080)
-{% endhighlight %}
+```
 
 in the following code, the site won't give an error if you don't provide a credential. But if you do it with `ali:ali` as username and password, you'll get the "hidden message". It's pretty cool, isn't it? Now think about this: will your automated web vulnerability scanning tool detect this or not? I didn't think so either. 
 
@@ -74,7 +72,7 @@ It's not all text either, with the right code, you can write an HTTP proxy with 
 
 ## Serve multiple services on the same port
 
-So we had to change a function in the web app to add our own stuff in there. It's cool but it has a problem. If the code is managed by a version control software (e.g. git), the file would become an unstaged file and the injected code will be recognizable for the developer. Although you can always change the library itself, which most of the time isn't checked by the version control software. But there's another way! There's a very interesting tool called <a href="https://github.com/yrutschle/sslh">`sslh`</a>. They describe it as "Applicative Protocol Multiplexer". I think their Github page describes them perfectly:
+So we had to change a function in the web app to add our own stuff in there. It's cool but it has a problem. If the code is managed by a version control software (e.g. git), the file would become an unstaged file and the injected code will be recognizable for the developer. Although you can always change the library itself, which most of the time isn't checked by the version control software. But there's another way! There's a very interesting tool called [sslh](https://github.com/yrutschle/sslh). They describe it as "Applicative Protocol Multiplexer". I think their Github page describes them perfectly:
 
 `sslh` accepts connections on specified ports and forwards them further based on tests performed on the first data packet sent by the remote client.
 
