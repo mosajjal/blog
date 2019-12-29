@@ -1,4 +1,4 @@
-baseurl = "https://example.com/"
+baseurl = "https://mosajjal.gitlab.com/"
 languageCode = "en-us"
 theme = "terminal"
 paginate = 5
