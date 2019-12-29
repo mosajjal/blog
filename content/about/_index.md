@@ -1,9 +1,19 @@
-## Front Page Content
+---
+title: About me
+subtitle: Why you'd want to hang out with me
+comments: false
+---
 
-This website is powered by [GitLab Pages](https://about.gitlab.com/features/pages/)
-/ [Hugo](https://gohugo.io) and can be built in under 1 minute.
-Literally. It uses the `beautifulhugo` theme which supports content on your front page.
-Edit `/content/_index.md` to change what appears here. Delete `/content/_index.md`
-if you don't want any content here.
+My name is The Dude. I have the following qualities:
 
-Head over to the [GitLab project](https://gitlab.com/pages/hugo) to get started.
+- I rock a great beard
+- I'm extremely loyal to my friends
+- I like bowling
+
+That rug really tied the room together.
+
+### my history
+
+To be honest, I'm having some trouble remembering right now, so why don't you
+just watch [my movie](https://en.wikipedia.org/wiki/The_Big_Lebowski) and it
+will answer **all** your questions.
