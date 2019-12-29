@@ -1,4 +1,4 @@
-baseurl = "https://mosajjal.gitlab.com/"
+baseurl = "https://mosajjal.gitlab.io/n0p-blog"
 languageCode = "en-us"
 theme = "terminal"
 paginate = 5
