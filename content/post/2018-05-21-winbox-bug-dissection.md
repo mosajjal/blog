@@ -11,6 +11,8 @@ tags:
 description: ''
 categories:
 - Reverse Engineering 
+Cover:
+- "https://mosajjal.gitlab.io/n0p-blog/img/author.jpg"
 ---
 
 ![Morphus](/n0p-blog/img/mikrotik-winbox/morphus-meme.jpg)
