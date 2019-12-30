@@ -11,8 +11,6 @@ tags:
 description: ''
 categories:
 - Reverse Engineering 
-twitter:
-- image: /n0p-blog/img/mikrotik-winbox/morphus-meme.jpg
 ---
 
 ![Morphus](/n0p-blog/img/mikrotik-winbox/morphus-meme.jpg)

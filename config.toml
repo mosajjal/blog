@@ -9,6 +9,7 @@ paginate = 10
   showMenuItems = 2
   fullWidthTheme = false
   centerTheme = false
+  image = "n0p-blog/img/author.jpg"
 
 [languages]
   [languages.en]
