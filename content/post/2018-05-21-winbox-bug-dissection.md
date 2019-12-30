@@ -11,14 +11,11 @@ tags:
 description: ''
 categories:
 - Reverse Engineering 
-twitter:
-- card: "Dissection of Winbox critical vulnerability"
-- site: "@vninjanet"
-- creator: "@_n0p_"
-- image: 'https://memegenerator.net/img/instances/81843931/what-if-i-told-you-relying-on-client-isnt-safe.jpg'
+images:
+- /img/mikrotik-winbox/morphus-meme.jpg
 ---
 
-![Matrix](https://memegenerator.net/img/instances/81843931/what-if-i-told-you-relying-on-client-isnt-safe.jpg)
+![Morphus](/img/mikrotik-winbox/morphus-meme.jpg)
 
 On April 23rd 2018, Mikrotik fixed a vulnerability "that allowed gaining access to an unsecured router". myself and [@yalpanian](https://twitter.com/yalpanian) of [@BASUCERT](https://twitter.com/BASUCERT) (part of [IR CERT](https://cert.ir)) reverse engineering lab tried to figure out what exactly got fixed, what was the problem in the first place and how severe was the impact of it.
 
