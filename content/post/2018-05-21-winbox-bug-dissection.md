@@ -11,7 +11,7 @@ tags:
 description: ''
 categories:
 - Reverse Engineering 
-Cover:
+cover:
 - "https://mosajjal.gitlab.io/n0p-blog/img/author.jpg"
 ---
 
