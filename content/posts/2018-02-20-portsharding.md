@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "What is port sharding in Linux and why should I care"
-comments: true
+comment: true
 aliases: [/portsharding]
 date:   2018-02-20 18:18:00
 tags:

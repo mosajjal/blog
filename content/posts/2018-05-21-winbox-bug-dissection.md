@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Dissection of Winbox critical vulnerability"
-comments: true
+comment: true
 aliases: [/winbox-bug-dissection]
 date:   2018-05-21 18:18:00
 tags:
