@@ -1,6 +1,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noodp" />
 <meta name="Description" content="{{ .Params.description | default .Site.Params.description }}">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-eval' 'unsafe-inline' www.google-analytics.com https://code.jquery.com https://disqus.com https://*.disqus.com https://*.disquscdn.com https://*.cloudinary.com http://www.gravatar.com;">
 {{ with .Site.Params.google_verification -}}
     <meta name="google-site-verification" content="{{ . }}" />
 {{ end -}}
