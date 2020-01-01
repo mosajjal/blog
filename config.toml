@@ -129,6 +129,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     Telegram = "mosajjal"
     #Medium = "xxxx"
     Gitlab = "mosajjal"
+    Dockerhub = "mosajjal"
     #Youtubelegacy = "xxxx"
     #Youtubecustom = "xxxx"
     #Youtubechannel = "xxxx"
@@ -175,7 +176,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     #Vine = "xxxx"
     #Googlescholar = "xxxx"
     #Researchgate = "xxxx"
-    Mastodon = "n0p"
+    Mastodon = "@n0p"
     #Thingiverse = "xxxx"
 
   [params.share]                                         # Social Share Links in post page
