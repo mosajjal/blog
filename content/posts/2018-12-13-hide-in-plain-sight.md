@@ -10,6 +10,8 @@ tags:
 - OSINT
 - Infosec
 description: ''
+images:
+- author.jpg
 categories:
 - Infosec
 - Learn Linux 

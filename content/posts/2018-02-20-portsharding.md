@@ -8,6 +8,8 @@ tags:
 - linux
 - networking
 description: ''
+images:
+- author.jpg
 categories:
 - Learn Linux 
 ---

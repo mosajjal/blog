@@ -67,6 +67,7 @@ staticDir = ["static", "../assets/others"]               # static directories
   comment = true
   version = "5.x"                                        # LoveIt theme version
   description = "n0p Blog"                      # site description
+  images = ["author.jpg"]
   keywords = ["Infosec", "Blue Team", "Linux"]                   # site keywords
 
                                                       #### Home Page Info

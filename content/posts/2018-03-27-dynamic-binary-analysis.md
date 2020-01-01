@@ -9,6 +9,8 @@ tags:
 - reverse
 - binary analysis
 description: ''
+images:
+- author.jpg
 categories:
 - Reverse Engineering 
 ---

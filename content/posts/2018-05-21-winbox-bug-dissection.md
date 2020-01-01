@@ -9,6 +9,8 @@ tags:
 - Winbox
 - Path Traversal
 description: ''
+images:
+- author.jpg
 categories:
 - Reverse Engineering 
 ---
