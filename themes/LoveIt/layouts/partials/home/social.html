@@ -1,3 +1,6 @@
+{{ with .Site.Params.Social.Gnupg }}
+    <a href="{{.}}" rel="me noopener noreffer" target="_blank"><i class="fab fa-unlock-alt fa-fw"></i></a>
+{{ end }}
 {{ with .Site.Params.Social.Github }}
     <a href="https://github.com/{{.}}" rel="me noopener noreffer" target="_blank"><i class="fab fa-github-alt fa-fw"></i></a>
 {{ end }}

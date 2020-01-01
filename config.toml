@@ -119,6 +119,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     email = ""
 
   [params.social]                                        # Social Info in home page
+    Gnupg = "/gpg/pub.txt"
     GitHub = "mosajjal"
     Linkedin = "mosajjal"
     Twitter = "_n0p_"
@@ -135,7 +136,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     #Quora = "xxxx"
     #Keybase = "xxxx"
     #Pinterest = "xxxx"
-    #Reddit = "xxxx"
+    Reddit = "mosajjal"
     #Codepen = "xxxx"
     #Bitbucket = "xxxx"
     #Stackoverflow = "xxxx"
@@ -174,7 +175,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     #Vine = "xxxx"
     #Googlescholar = "xxxx"
     #Researchgate = "xxxx"
-    Mastodon = "@n0p@fosstodon.org"
+    Mastodon = "n0p"
     #Thingiverse = "xxxx"
 
   [params.share]                                         # Social Share Links in post page
