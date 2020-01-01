@@ -1,7 +1,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noodp" />
 <meta name="Description" content="{{ .Params.description | default .Site.Params.description }}">
-<meta http-equiv="Content-Security-Policy" content="default-src *; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval' http://www.google.com">{{ with .Site.Params.google_verification -}}
+{{ with .Site.Params.google_verification -}}
     <meta name="google-site-verification" content="{{ . }}" />
 {{ end -}}
 {{ with .Site.Params.bing_verification -}}
