@@ -15,7 +15,7 @@ categories:
 - Reverse Engineering 
 ---
 
-![Morphus](/n0p-blog/img/mikrotik-winbox/morphus-meme.jpg)
+![Morphus](/img/mikrotik-winbox/morphus-meme.jpg)
 
 On April 23rd 2018, Mikrotik fixed a vulnerability "that allowed gaining access to an unsecured router". myself and [@yalpanian](https://twitter.com/yalpanian) of [@BASUCERT](https://twitter.com/BASUCERT) (part of [IR CERT](https://cert.ir)) reverse engineering lab tried to figure out what exactly got fixed, what was the problem in the first place and how severe was the impact of it.
 
