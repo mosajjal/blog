@@ -86,6 +86,11 @@ So basically, the setup would be:
 
 Grafana provides an intuitive interface to any ClickHouse database. It's free and open source and sharing your dashboard in it is a breeze. I managed to get some really useful data out of passiveDNS using this dashboard.
 
+The entire setup process as well as a dashboard template is available in the Gitlab repository, after setting it up, it should look something like this
 
-![image](/img/dnsmonster/dnsmonster.jpg)
+![image](/img/dnsmonster/overview.jpg)
+
+The project has worked fairly well, but it obviously hasn't been through many tests. If you see anything not working perfectly, Issues/PRs are more than welcome.
+
+Enjoy!
 
