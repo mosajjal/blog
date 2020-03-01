@@ -127,6 +127,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     #Email = "xxxx"
     Facebook = "mosajjal"
     Telegram = "mosajjal"
+    Onion = "qa63pxzjgnnxgldbhwmilbr4ak2rbylf7wwqpz2papc5jyfi4sgiyeqd.onion"
     #Medium = "xxxx"
     Gitlab = "mosajjal"
     Dockerhub = "mosajjal"
