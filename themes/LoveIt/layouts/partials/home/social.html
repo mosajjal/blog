@@ -17,7 +17,7 @@
     <a href="https://facebook.com/{{.}}" rel="me noopener noreffer" target="_blank"><i class="fab fa-facebook fa-fw"></i></a>
 {{ end }}
 {{ with .Site.Params.Social.Onion }}
-    <a href="http://{{.}}" rel="me noopener noreffer" target="_blank"><img src="/img/onion.svg"></a>
+    <a href="http://{{.}}" style="-webkit-filter: invert(.50); filter: invert(.50);" rel="me noopener noreffer" target="_blank"><img src="/img/onion.svg"></a>
 {{ end }}
 {{ with .Site.Params.Social.Telegram}}
     <a href="https://t.me/{{.}}" rel="me noopener noreffer" target="_blank"><i class="fab fa-telegram-plane fa-fw"></i></a>
