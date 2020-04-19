@@ -8,6 +8,8 @@ tags:
 - Mikrotik
 - Winbox
 - Path Traversal
+- Winbox Exploit
+- Exploit Winbox
 description: ''
 images:
 - author.jpg
