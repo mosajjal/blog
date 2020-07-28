@@ -249,3 +249,9 @@ staticDir = ["static", "../assets/others"]               # static directories
   section = ["HTML", "RSS"]
   taxonomy = ["HTML", "RSS"]
   taxonomyTerm = ["HTML"]
+
+[[redirects]]
+  from = "/assets/gpg/pub.txt"
+  status = 200
+  to = "/gpg/pub.txt"
+
