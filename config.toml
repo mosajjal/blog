@@ -296,7 +296,6 @@ staticDir = ["static", "../assets/others"]               # static directories
   taxonomy = ["HTML", "RSS"]
   taxonomyTerm = ["HTML"]
 
-# Markup related configuration in Hugo
 [markup]
   # Syntax Highlighting (https://gohugo.io/content-management/syntax-highlighting)
   [markup.highlight]
