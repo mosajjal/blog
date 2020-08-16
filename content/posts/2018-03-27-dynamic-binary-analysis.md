@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Getting started with Dynamic Binary Analysis"
-comment: true
+comments: true
 aliases: [/dynamic-binary-analysis/]
 date:   2018-03-27 18:18:00
 tags:

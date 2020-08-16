@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Monitoring 200K DNS Queries per second using ClickHouse"
-comment: true
+comments: true
 aliases: [/dnsmonster]
 date:   2020-02-07 10:24:00
 tags:

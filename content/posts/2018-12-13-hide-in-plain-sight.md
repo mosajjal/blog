@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "Hide in Plain Sight: Protocol Multiplexers"
-comment: true
+comments: true
 aliases: [/hide-in-plain-sight/]
 date:   2018-12-13 18:18:00
 tags:
