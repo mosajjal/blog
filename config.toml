@@ -8,8 +8,6 @@ hasCJKLanguage = false                                   # whether to include ch
 paginate = 12                                            # default amount of posts in each pages
 enableEmoji = true                                       # whether to use emoji code
 enableRobotsTXT = true                                   # whether to use robots.txt
-googleAnalytics = "UA-114664513-1"                                     # [UA-XXXXXXXX-X] google analytics code
-disqusShortname = "n0p-me"                             # Disqus shortname to use Disqus in posts
 copyright = "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License."
                                                          # copyright description used only for seo schema
 
@@ -282,9 +280,13 @@ staticDir = ["static", "../assets/others"]               # static directories
     visitor = true
     recordIP = true
 
-[privacy]                                             #### Privacy Info (https://gohugo.io/about/hugo-and-gdpr/)
-  [privacy.googleAnalytics]
-    anonymizeIP = true
+  [params.analytics]
+    enable = false
+    # Google Analytics
+    [params.analytics.google]
+      id = "UA-114664513-1"
+      # whether to anonymize IP
+      anonymizeIP = true
 
   [privacy.youtube]
     privacyEnhanced = true
