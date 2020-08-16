@@ -11,7 +11,7 @@ description: ''
 images:
 - author.jpg
 categories:
-- Learn Linux 
+- Linux 
 ---
 
 

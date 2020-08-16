@@ -14,7 +14,7 @@ images:
 - author.jpg
 categories:
 - Infosec
-- Learn Linux 
+- Linux 
 ---
 
 ![test](/img/hide-in-plain-sight/meme.jpeg)
