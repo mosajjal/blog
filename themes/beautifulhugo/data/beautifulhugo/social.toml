@@ -117,5 +117,3 @@ id = "Goodreads"
 url = "https://www.goodreads.com/%s"
 title = "Goodreads"
 icon = "fab fa-goodreads"
-
-
