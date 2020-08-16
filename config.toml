@@ -239,14 +239,14 @@ staticDir = ["static", "../assets/others"]               # static directories
     #VKontakte = true
     #Weibo = true
 
-    [params.page.comment]
+  [params.page.comment]
+    enable = true
+    # Disqus comment config
+    [params.page.comment.disqus]
+      # LoveIt NEW | 0.1.1
       enable = true
-      # Disqus comment config
-      [params.page.comment.disqus]
-        # LoveIt NEW | 0.1.1
-        enable = true
-        # Disqus shortname to use Disqus in posts
-        shortname = "n0p-me"
+      # Disqus shortname to use Disqus in posts
+      shortname = "n0p-me"
 
   [params.publisher]                                     # Publisher Info just for SEO
     name = "Ali Mosajjal"
