@@ -4,7 +4,7 @@ title:  SSH MFA using Slack/Teams/Discord
 comments: true
 aliases: [/ssh-mfa-webhook]
 image: ''
-date:   2020-10-01 18:18:00
+date:   2020-09-28 10:11:00
 tags:
 - linux
 - ssh
