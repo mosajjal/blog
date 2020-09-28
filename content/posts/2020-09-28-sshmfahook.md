@@ -25,8 +25,8 @@ To that end, I decided to do a cost-benefit analysis of different methods to sec
 
 Ideally, the second factor of any authentication shouldn't use the medium that the first factor is using. eg having MFA sent over the internet still means we trust the internet and TLS/PKI. There are several protocols that implement an agreed timestamped approach with the key sync happening only once at the start of the key exchange, and there's no need for the "comms" to happen outside of that short period of time. The main implementation of this protocol is RFC 6238 (TOTP). TOTP is used quite extensively to build MFA. Google Authenticator, Lastpass Authenticator, Cisco Duo and Microsoft Auth all support RFC6238. But there are two main drawbacks of using this in a shared production environment
 
-    * Losing your private key means losing your access. If you drop your phone in the toilet, no SSH for you until you console back into the machine and re-configure the keys with your new phone
-    * Definitely not ideal for teams. One key is for one user and one user only. there's no good way to share the key between teams and have audit in place for everyone.
+* Losing your private key means losing your access. If you drop your phone in the toilet, no SSH for you until you console back into the machine and re-configure the keys with your new phone
+* Definitely not ideal for teams. One key is for one user and one user only. there's no good way to share the key between teams and have audit in place for everyone.
 
 As I mentioned before, having a "shared" environment is not ideal at all. It's not the best practice and it's not recommended at all. But in reality it happens more often than not, especially in staging/testing instances. This is where making those corner-cases secure becomes important, and this is where Webhooks come into play.
 
