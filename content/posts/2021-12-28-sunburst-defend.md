@@ -9,12 +9,11 @@ tags:
 - sunburst
 - solarwinds
 - Infosec
-description: "Modern Cybersecurity in Cloud Native era"
+description: "Sunburst overview and next steps"
 images:
 - /img/sunburst-defend/sunburst-oj.png
 categories:
 - security
-- containers
 - Infosec
 --- 
 # Basic guidelines that would've prevented SUNBURST
