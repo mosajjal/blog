@@ -16,7 +16,6 @@ categories:
 - security
 - Infosec
 --- 
-# Basic guidelines that would've prevented SUNBURST
 
 ## SolarWinds Orion
 First off, let's have a brief overview of what SolarWinds Orion is and what's it good for. Orion's main purpose is to give a single pane of glass to look at your IT infrastructure. Various technologies can pump their metrics into Orion Database using Orion poller as a proxy. Orion Pollers will sit in your network, consume the metrics they need and push it to the database engine. From the design perspective, it's a robust, effective and scalable way of having the data always ready. Oh btw, SolarWinds has nearly 18,000 customers worldwide.
