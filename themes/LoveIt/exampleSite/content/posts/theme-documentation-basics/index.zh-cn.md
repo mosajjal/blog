@@ -777,7 +777,7 @@ hugo
     # 你的社交 ID
     id = "@xxxx"
     # 你的社交链接的前缀
-    prefix = "https://mastodon.social/"
+    prefix = "https://fosstodon.org/"
     # 当鼠标停留在图标上时的提示内容
     title = "Mastodon"
 ```

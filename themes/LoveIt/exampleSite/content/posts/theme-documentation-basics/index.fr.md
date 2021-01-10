@@ -778,7 +778,7 @@ Or You can set more options through a dict:
     # your social ID
     id = "@xxxx"
     # prefix of your social link
-    prefix = "https://mastodon.social/"
+    prefix = "https://fosstodon.org/"
     # content hovering on the icon
     title = "Mastodon"
 ```
