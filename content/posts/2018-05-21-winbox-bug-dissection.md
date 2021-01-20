@@ -10,6 +10,13 @@ tags:
 - Path Traversal
 - Winbox Exploit
 - Exploit Winbox
+keywords:
+- winbox
+- exploit
+- winbox exploit
+- CVE-2018-14847
+- zeroday
+- mikrotik
 description: ''
 images:
 - author.jpg

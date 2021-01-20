@@ -8,6 +8,15 @@ tags:
 - dns
 - networking
 - nsm
+keywords:
+- passivedns
+- bigdata
+- cybersecurity
+- security
+- network security
+- dns
+- kafka
+- github
 description: 'Passive DNS monitoring using ClickHouse and Grafana'
 images:
 - /img/dnsmonster/overview.jpg
