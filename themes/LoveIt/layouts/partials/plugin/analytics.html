@@ -19,4 +19,18 @@
         </script>
         {{- dict "Source" ($analytics.fathom.server | default "cdn.usefathom.com" | printf "https://%v/tracker.js") "Async" true "Attr" "id=fathom-script" | partial "plugin/script.html" -}}
     {{- end -}}
+
+
+    {{- /* CloudFlare Analytics */ -}}
+    {{- with $analytics.cf.token -}}
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "251e98b1104f4db08b06ddd68256ec2f"}'></script>
+
+        <script type="text/javascript">
+            window.cloudflareanalytics=window.cloudflareanalytics||function(){(cloudflareanalytics.q=cloudflareanalytics.q||[]).push(arguments);};
+            cloudflareanalytics('set', 'token', '{{ . }}');
+            cloudflareanalytics('trackPageview');
+        </script>
+        {{- dict "Source" ($analytics.fathom.server | default "static.cloudflareinsights.com" | printf "https://%v/beacon.min.js") "Async" true "Attr" "id=cloudflare-script" | partial "plugin/script.html" -}}
+    {{- end -}}
+
 {{- end -}}
