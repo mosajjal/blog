@@ -1,0 +1,227 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta http-equiv=content-security-policy content="upgrade-insecure-requests; block-all-mixed-content; default-src 'self'; child-src 'self'; font-src 'self' disqus.com disquscdn.com *.disqus.com *.disquscdn.com; form-action 'self' https://syndication.twitter.com/ https://platform.twitter.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; frame-src 'self' https://cse.google.com https://player.vimeo.com www.youtube.com www.youtube-nocookie.com https://platform.twitter.com https://syndication.twitter.com  jsfiddle.net www.instagram.com https://kuula.co https://www.slideshare.net https://www.google.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; img-src 'self' https://jeremylikness.visualstudio.com *.gstatic.com *.amazon-adsystem.com https://www.googleapis.com https://images-na.ssl-images-amazon.com https://platform.twitter.com *.twimg.com https://syndication.twitter.com data: https://files.kuula.io disqus.com disquscdn.com *.disqus.com *.disquscdn.com; object-src 'none'; style-src 'self' 'unsafe-inline' https://use.fontawesome.com https://fonts.googleapis.com https://www.google.com https://platform.twitter.com *.twimg.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; script-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; prefetch-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; connect-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com;">
+<meta name=keywords content="[Infosec Blue Team Linux]">
+<meta name=robots content="noodp">
+<meta http-equiv=x-ua-compatible content="IE=edge, chrome=1">
+<title>Hide in Plain Sight: Protocol Multiplexers - n0p Blog</title><meta name=Description content="n0p Blog"><meta property="og:title" content="Hide in Plain Sight: Protocol Multiplexers">
+<meta property="og:description" content="Almost every Internet-connected device on the planet comes with a nice web interface to interact with. And some of them like routers and APs come with their own little firewall to prevent backdoors and whatnot. So what if one of these devices or even servers gets compromised? Where do you look at to find IoC (indication of compromise) in them?
+I don&rsquo;t think I need to explain why IoT is a huge security challenge for every organization since everyone at least has a &ldquo;smart&rdquo; printer lying around somewhere.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://blog.n0p.me/2018/12/2018-12-13-hide-in-plain-sight/"><meta property="og:image" content="https://blog.n0p.me/author.jpg"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2018-12-13T18:18:00+00:00">
+<meta property="article:modified_time" content="2018-12-13T18:18:00+00:00">
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://blog.n0p.me/author.jpg">
+<meta name=twitter:title content="Hide in Plain Sight: Protocol Multiplexers">
+<meta name=twitter:description content="Almost every Internet-connected device on the planet comes with a nice web interface to interact with. And some of them like routers and APs come with their own little firewall to prevent backdoors and whatnot. So what if one of these devices or even servers gets compromised? Where do you look at to find IoC (indication of compromise) in them?
+I don&rsquo;t think I need to explain why IoT is a huge security challenge for every organization since everyone at least has a &ldquo;smart&rdquo; printer lying around somewhere.">
+<meta name=application-name content="n0p Blog">
+<meta name=apple-mobile-web-app-title content="n0p Blog"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico>
+<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
+<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=manifest href=/site.webmanifest><link rel=canonical href=https://blog.n0p.me/2018/12/2018-12-13-hide-in-plain-sight/><link rel=prev href=https://blog.n0p.me/2018/05/2018-05-21-winbox-bug-dissection/><link rel=next href=https://blog.n0p.me/2020/02/2020-02-05-dnsmonster/><link rel=stylesheet href=/lib/normalize/normalize.min.css><link rel=stylesheet href=/css/style.min.css><link rel=stylesheet href=/lib/fontawesome-free/all.min.css><link rel=stylesheet href=/lib/animate/animate.min.css><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"Hide in Plain Sight: Protocol Multiplexers","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/blog.n0p.me\/2018\/12\/2018-12-13-hide-in-plain-sight\/"},"genre":"posts","keywords":"Linux, Network, OSINT, Infosec","wordcount":1095,"url":"https:\/\/blog.n0p.me\/2018\/12\/2018-12-13-hide-in-plain-sight\/","datePublished":"2018-12-13T18:18:00+00:00","dateModified":"2018-12-13T18:18:00+00:00","license":"This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher":{"@type":"Organization","name":"Ali Mosajjal"},"author":{"@type":"Person","name":"Ali Mosajjal"},"description":""}</script></head>
+<body header-desktop header-mobile><script type=text/javascript>(window.localStorage&&localStorage.getItem('theme')?localStorage.getItem('theme')==='dark':''==='auto'?window.matchMedia('(prefers-color-scheme: dark)').matches:''==='dark')&&document.body.setAttribute('theme','dark')</script>
+<div id=mask></div><div class=wrapper><header class=desktop id=header-desktop>
+<div class=header-wrapper>
+<div class=header-title>
+<a href=/ title="n0p Blog">n0p Blog</a>
+</div>
+<div class=menu>
+<div class=menu-inner><a class=menu-item href=/posts> Posts </a><a class=menu-item href=/tags> Tags </a><a class=menu-item href=/categories> Categories </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop>
+<input type=text placeholder="Search titles or contents..." id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=Search>
+<i class="fas fa-search fa-fw"></i>
+</a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=Clear>
+<i class="fas fa-times-circle fa-fw"></i>
+</a>
+<span class="search-button search-loading" id=search-loading-desktop>
+<i class="fas fa-spinner fa-fw fa-spin"></i>
+</span>
+</span><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme">
+<i class="fas fa-adjust fa-fw"></i>
+</a>
+</div>
+</div>
+</div>
+</header><header class=mobile id=header-mobile>
+<div class=header-container>
+<div class=header-wrapper>
+<div class=header-title>
+<a href=/ title="n0p Blog">n0p Blog</a>
+</div>
+<div class=menu-toggle id=menu-toggle-mobile>
+<span></span><span></span><span></span>
+</div>
+</div>
+<div class=menu id=menu-mobile><div class=search-wrapper>
+<div class="search mobile" id=search-mobile>
+<input type=text placeholder="Search titles or contents..." id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=Search>
+<i class="fas fa-search fa-fw"></i>
+</a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=Clear>
+<i class="fas fa-times-circle fa-fw"></i>
+</a>
+<span class="search-button search-loading" id=search-loading-mobile>
+<i class="fas fa-spinner fa-fw fa-spin"></i>
+</span>
+</div>
+<a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>
+Cancel
+</a>
+</div><a class=menu-item href=/posts title>Posts</a><a class=menu-item href=/tags title>Tags</a><a class=menu-item href=/categories title>Categories</a><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme">
+<i class="fas fa-adjust fa-fw"></i>
+</a></div>
+</div>
+</header>
+<div class="search-dropdown desktop">
+<div id=search-dropdown-desktop></div>
+</div>
+<div class="search-dropdown mobile">
+<div id=search-dropdown-mobile></div>
+</div>
+<main class=main>
+<div class=container><div class=toc id=toc-auto>
+<h2 class=toc-title>Contents</h2>
+<div class=toc-content id=toc-content-auto></div>
+</div><article class="page single"><h1 class="single-title animated flipInX">Hide in Plain Sight: Protocol Multiplexers</h1><div class=post-meta>
+<div class=post-meta-line><span class=post-author><a href=/ title=Author rel=" author" class=author><i class="fas fa-user-circle fa-fw"></i>Ali Mosajjal</a></span>&nbsp;<span class=post-category>included in <a href=/categories/infosec/><i class="far fa-folder fa-fw"></i>Infosec</a>&nbsp;<a href=/categories/linux/><i class="far fa-folder fa-fw"></i>Linux</a></span></div>
+<div class=post-meta-line><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime=2018-12-13>2018-12-13</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;1095 words&nbsp;
+<i class="far fa-clock fa-fw"></i>&nbsp;6 minutes&nbsp;</div>
+</div><div class="details toc" id=toc-static kept>
+<div class="details-summary toc-title">
+<span>Contents</span>
+<span><i class="details-icon fas fa-angle-right"></i></span>
+</div>
+<div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents>
+<ul>
+<li><a href=#what-the-hell-am-i-talking-about>What the hell am I talking about</a></li>
+<li><a href=#optional-authentication>Optional Authentication</a></li>
+<li><a href=#serve-multiple-services-on-the-same-port>Serve multiple services on the same port</a></li>
+<li><a href=#if-the-server-supports-ssltls>If the server supports SSL/TLS</a></li>
+<li><a href=#how-do-i-protect-myself-against-this-attack>How do I protect myself against this attack?</a></li>
+</ul>
+</nav></div>
+</div><div class=content id=content><p><img class=lazyload src=/svg/loading.min.svg data-src=/img/hide-in-plain-sight/meme.jpeg data-srcset="/img/hide-in-plain-sight/meme.jpeg, /img/hide-in-plain-sight/meme.jpeg 1.5x, /img/hide-in-plain-sight/meme.jpeg 2x" data-sizes=auto alt=/img/hide-in-plain-sight/meme.jpeg title=test></p>
+<p>Almost every Internet-connected device on the planet comes with a nice web interface to interact with. And some of them like routers and APs come with their own little firewall to prevent backdoors and whatnot. So what if one of these devices or even servers gets compromised? Where do you look at to find IoC (indication of compromise) in them?</p>
+<p>I don&rsquo;t think I need to explain why IoT is a huge security challenge for every organization since everyone at least has a &ldquo;smart&rdquo; printer lying around somewhere. Lately, I was looking at ways to hide the traffic within another traffic type or regular TCP port and I stumbled upon two great ways to make it happen.</p>
+<h2 id=what-the-hell-am-i-talking-about>What the hell am I talking about</h2>
+<p>Let&rsquo;s put on our black hat and think about it for a second. I just pwned an internet connected device, but the only port we have is 80 (443 as well if we get lucky!). I can potentially open up another port, do a reverse connection to my C2 and exploit the firewall as well, but I wanna be as stealthy as possible. What are my options?</p>
+<p>I want to show you two methods that you must be aware of if you&rsquo;re hunting for these types of advanced threats. CIA (or maybe NSA, idk) has been reported using these methods to hide their attacks from their targets so they must be pretty dope. Let&rsquo;s dive in.</p>
+<h2 id=optional-authentication>Optional Authentication</h2>
+<p>Have you seen those annoying old school basic authentication schemes (which are rarely used nowadays) in very old devices? The auth pop-up is handled by the browser and if it&rsquo;s successful, you&rsquo;re redirected to the page and if you&rsquo;re not, you&rsquo;d get a 401 error.</p>
+<p><img class=lazyload src=/svg/loading.min.svg data-src=https://crossbrowsertesting.com/images/faq/basic-auth-example.png data-srcset="https://crossbrowsertesting.com/images/faq/basic-auth-example.png, https://crossbrowsertesting.com/images/faq/basic-auth-example.png 1.5x, https://crossbrowsertesting.com/images/faq/basic-auth-example.png 2x" data-sizes=auto alt=https://crossbrowsertesting.com/images/faq/basic-auth-example.png title="Basic Authentication"></p>
+<p>So how does your browser knows it&rsquo;s time for authentication? It&rsquo;s pretty simple. when you create a page with basic auth, the first time you do a GET request, your browser is greeted with a 40x and a <code>www-authenticate</code> message. This way, your browser pops up a dialog and asks for credentials. But here&rsquo;s where it gets very interesting. What if the server doesn&rsquo;t send that <code>www-authenticate</code> message? What if the server responds with a 200 with some content. In fact, what if the server responds normally to it and shows you the website?</p>
+<p>You might suggest that okay, what is the point then? You just described a regular visit to a website with the excitement of a 5-year-old. So what? Here&rsquo;s where it gets really cool. What if, the server offers TWO 200 responses, one for giving it auth, one for no-auth page handling. Let me explain, I wrote a simple <a href=https://bottlepy.org target=_blank rel="noopener noreffer">Bottle</a> code to demonstrate this.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-py data-lang=py><span class=kn>from</span> <span class=nn>bottle</span> <span class=kn>import</span> <span class=n>route</span><span class=p>,</span> <span class=n>run</span><span class=p>,</span> <span class=n>request</span>
+
+<span class=k>def</span> <span class=nf>check</span><span class=p>(</span><span class=n>user</span><span class=p>,</span> <span class=n>pw</span><span class=p>):</span>
+    <span class=k>if</span> <span class=n>user</span> <span class=o>==</span> <span class=s2>&#34;ali&#34;</span><span class=p>:</span>
+        <span class=k>if</span> <span class=n>pw</span> <span class=o>==</span> <span class=s2>&#34;ali&#34;</span><span class=p>:</span>
+            <span class=k>return</span> <span class=kc>True</span>
+    <span class=k>return</span> <span class=kc>False</span>
+
+<span class=k>def</span> <span class=nf>auth_optional</span><span class=p>(</span><span class=n>check</span><span class=p>,</span> <span class=n>realm</span><span class=o>=</span><span class=s2>&#34;private&#34;</span><span class=p>,</span> <span class=n>text</span><span class=o>=</span><span class=s2>&#34;Access denied&#34;</span><span class=p>):</span>
+    <span class=s1>&#39;&#39;&#39; Callback decorator to require HTTP auth (basic).
+</span><span class=s1>        TODO: Add route(check_auth=...) parameter. &#39;&#39;&#39;</span>
+    <span class=k>def</span> <span class=nf>decorator</span><span class=p>(</span><span class=n>func</span><span class=p>):</span>
+        <span class=k>def</span> <span class=nf>wrapper</span><span class=p>(</span><span class=o>*</span><span class=n>a</span><span class=p>,</span> <span class=o>**</span><span class=n>ka</span><span class=p>):</span>
+            <span class=n>user</span><span class=p>,</span> <span class=n>password</span> <span class=o>=</span> <span class=n>request</span><span class=o>.</span><span class=n>auth</span> <span class=ow>or</span> <span class=p>(</span><span class=kc>None</span><span class=p>,</span> <span class=kc>None</span><span class=p>)</span>
+            <span class=k>if</span> <span class=ow>not</span><span class=p>(</span><span class=n>user</span> <span class=ow>is</span> <span class=kc>None</span> <span class=ow>or</span> <span class=ow>not</span> <span class=n>check</span><span class=p>(</span><span class=n>user</span><span class=p>,</span> <span class=n>password</span><span class=p>)):</span>
+                <span class=k>return</span> <span class=n>text</span>
+            <span class=k>return</span> <span class=n>func</span><span class=p>(</span><span class=o>*</span><span class=n>a</span><span class=p>,</span> <span class=o>**</span><span class=n>ka</span><span class=p>)</span>
+        <span class=k>return</span> <span class=n>wrapper</span>
+    <span class=k>return</span> <span class=n>decorator</span>
+
+<span class=nd>@route</span><span class=p>(</span><span class=s1>&#39;/&#39;</span><span class=p>)</span>
+<span class=nd>@auth_optional</span><span class=p>(</span><span class=n>check</span><span class=p>,</span> <span class=n>text</span><span class=o>=</span><span class=s2>&#34;Hidden Message&#34;</span><span class=p>)</span>
+<span class=k>def</span> <span class=nf>index</span><span class=p>():</span>
+    <span class=k>return</span> <span class=s2>&#34;Regular old website&#34;</span>
+
+<span class=n>run</span><span class=p>(</span><span class=n>host</span><span class=o>=</span><span class=s1>&#39;localhost&#39;</span><span class=p>,</span> <span class=n>port</span><span class=o>=</span><span class=mi>8080</span><span class=p>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>in the following code, the site won&rsquo;t give an error if you don&rsquo;t provide a credential. But if you do it with <code>ali:ali</code> as username and password, you&rsquo;ll get the &ldquo;hidden message&rdquo;. It&rsquo;s pretty cool, isn&rsquo;t it? Now think about this: will your automated web vulnerability scanning tool detect this or not? I didn&rsquo;t think so either.</p>
+<p>It&rsquo;s not all text either, with the right code, you can write an HTTP proxy with Auth on a functioning web application. That would be pretty cool as well. But this is just one way of hiding your service where no one can find. You can also do something called &ldquo;process multiplexing&rdquo;.</p>
+<h2 id=serve-multiple-services-on-the-same-port>Serve multiple services on the same port</h2>
+<p>So we had to change a function in the web app to add our own stuff in there. It&rsquo;s cool but it has a problem. If the code is managed by a version control software (e.g. git), the file would become an unstaged file and the injected code will be recognizable for the developer. Although you can always change the library itself, which most of the time isn&rsquo;t checked by the version control software. But there&rsquo;s another way! There&rsquo;s a very interesting tool called <a href=https://github.com/yrutschle/sslh target=_blank rel="noopener noreffer">sslh</a>. They describe it as &ldquo;Applicative Protocol Multiplexer&rdquo;. I think their Github page describes them perfectly:</p>
+<p><code>sslh</code> accepts connections on specified ports and forwards them further based on tests performed on the first data packet sent by the remote client.</p>
+<p>So, sslh listens on port 80 and forwards everything to the old port 80 (which must be changed now to something like 8000 but only on localhost). This doesn&rsquo;t make any difference to the end user but opens up everything for the attacker. the attacker could bring her own OpenVPN server, configures it and make it listen on port 1194 (again, localhost). But configures <code>sslh</code> to forward OpenVPN traffic to 1194 from 80.</p>
+<p>Port 80 will now serve both WWW and OpenVPN. Pretty neat, right?</p>
+<h2 id=if-the-server-supports-ssltls>If the server supports SSL/TLS</h2>
+<p>That&rsquo;s heaven right there. Why? you can encapsulate every protocol to TLS using <code>stunnel</code> and <code>proxytunnel</code>, right? So you can make EVERYTHING look like SSL/TLS traffic so even the more advanced IDS/IPS devices in the way won&rsquo;t notice anything other than &ldquo;normal&rdquo; traffic. The attacker can (and probably will) also steal the server certificate and makes the connection even more trustworthy as well.</p>
+<h2 id=how-do-i-protect-myself-against-this-attack>How do I protect myself against this attack?</h2>
+<p>In IoT, you&rsquo;re in bad luck. IoT devices don&rsquo;t offer a lot of tools to monitor their OS. Their shell is sometimes limited and nothing is very accessible. But, if you have a root account on any devices and you also have an RS232 or SSH connection to it (basically a root shell), you can monitor your devices by calculating md5 hashes of every file on its filesystem to see if anything changes over time.</p>
+<p>In servers, you can use a File Integrity Monitoring/FIM on your farm to see if any file is changing over time. pulsar.py is a very neat code that does that automatically as long as you configure <code>hubblestack</code> on your infrastructure. <code>osquery</code> is also used to do these kinds of monitoring by providing a SQL interface to all the bits and pieces of your server. Take a look at them.</p>
+</div><div class=post-footer id=post-footer>
+<div class=post-info>
+<div class=post-info-line>
+<div class=post-info-mod>
+<span>Updated on 2018-12-13</span>
+</div>
+<div class=post-info-license></div>
+</div>
+<div class=post-info-line>
+<div class=post-info-md></div>
+<div class=post-info-share>
+<span></span>
+</div>
+</div>
+</div>
+<div class=post-info-more>
+<section class=post-tags><i class="fas fa-tags fa-fw"></i>&nbsp;<a href=/tags/linux/>linux</a>,&nbsp;<a href=/tags/network/>Network</a>,&nbsp;<a href=/tags/osint/>OSINT</a>,&nbsp;<a href=/tags/infosec/>Infosec</a></section>
+<section>
+<span><a href=javascript:void(0); onclick=window.history.back()>Back</a></span>&nbsp;|&nbsp;<span><a href=/>Home</a></span>
+</section>
+</div>
+<div class=post-nav><a href=/2018/05/2018-05-21-winbox-bug-dissection/ class=prev rel=prev title="Dissection of Winbox critical vulnerability"><i class="fas fa-angle-left fa-fw"></i>Dissection of Winbox critical vulnerability</a>
+<a href=/2020/02/2020-02-05-dnsmonster/ class=next rel=next title="Monitoring 200K DNS Queries per second using ClickHouse">Monitoring 200K DNS Queries per second using ClickHouse<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id=comments><div id=disqus_thread class=comment></div><noscript>
+Please enable JavaScript to view the comments powered by <a href=https://disqus.com/?ref_noscript>Disqus</a>.
+</noscript></div></article></div>
+</main><footer class=footer>
+<div class=footer-container><div class=footer-line>Powered by <a href=https://gohugo.io/ target=_blank rel="noopener noreffer" title="Hugo 0.87.0">Hugo</a> | Theme - <a href=https://github.com/dillonzq/LoveIt target=_blank rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+</div><div class=footer-line><i class="far fa-copyright fa-fw"></i><span itemprop=copyrightYear>2021</span><span class=author itemprop=copyrightHolder>&nbsp;<a href=/ target=_blank>Ali Mosajjal</a></span></div>
+</div>
+</footer></div>
+<div id=fixed-buttons><a href=# id=back-to-top class=fixed-button title="Back to Top">
+<i class="fas fa-arrow-up fa-fw"></i>
+</a><a href=# id=view-comments class=fixed-button title="View Comments">
+<i class="fas fa-comment fa-fw"></i>
+</a>
+</div><script type=text/javascript src=https://n0p-me.disqus.com/embed.js defer></script><script type=text/javascript src=/lib/smooth-scroll/smooth-scroll.min.js></script><script type=text/javascript src=/lib/autocomplete/autocomplete.min.js></script><script type=text/javascript src=/lib/lunr/lunr.min.js></script><script type=text/javascript src=/lib/lazysizes/lazysizes.min.js></script><script type=text/javascript src=/lib/clipboard/clipboard.min.js></script><script type=text/javascript>window.config={code:{copyTitle:"Copy to clipboard",maxShownLines:10},comment:{},search:{highlightTag:"em",maxResultLength:10,noResultsFound:"No results found",snippetLength:30}}</script><script type=text/javascript src=/js/theme.min.js></script><script type=text/javascript>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-114664513-1',{anonymize_ip:!0})</script><script type=text/javascript src="https://www.googletagmanager.com/gtag/js?id=UA-114664513-1" async></script></body>
+</html>

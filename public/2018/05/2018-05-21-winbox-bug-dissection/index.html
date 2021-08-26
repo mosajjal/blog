@@ -1,0 +1,177 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta http-equiv=content-security-policy content="upgrade-insecure-requests; block-all-mixed-content; default-src 'self'; child-src 'self'; font-src 'self' disqus.com disquscdn.com *.disqus.com *.disquscdn.com; form-action 'self' https://syndication.twitter.com/ https://platform.twitter.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; frame-src 'self' https://cse.google.com https://player.vimeo.com www.youtube.com www.youtube-nocookie.com https://platform.twitter.com https://syndication.twitter.com  jsfiddle.net www.instagram.com https://kuula.co https://www.slideshare.net https://www.google.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; img-src 'self' https://jeremylikness.visualstudio.com *.gstatic.com *.amazon-adsystem.com https://www.googleapis.com https://images-na.ssl-images-amazon.com https://platform.twitter.com *.twimg.com https://syndication.twitter.com data: https://files.kuula.io disqus.com disquscdn.com *.disqus.com *.disquscdn.com; object-src 'none'; style-src 'self' 'unsafe-inline' https://use.fontawesome.com https://fonts.googleapis.com https://www.google.com https://platform.twitter.com *.twimg.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; script-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; prefetch-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; connect-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com;">
+<meta name=keywords content="winbox,exploit,winbox exploit,CVE-2018-14847,zeroday,mikrotik">
+<meta name=robots content="noodp">
+<meta http-equiv=x-ua-compatible content="IE=edge, chrome=1">
+<title>Dissection of Winbox critical vulnerability - n0p Blog</title><meta name=Description content="n0p Blog"><meta property="og:title" content="Dissection of Winbox critical vulnerability">
+<meta property="og:description" content="On April 23rd 2018, Mikrotik fixed a vulnerability &ldquo;that allowed gaining access to an unsecured router&rdquo;. myself and @yalpanian of @BASUCERT (part of IR CERT) reverse engineering lab tried to figure out what exactly got fixed, what was the problem in the first place and how severe was the impact of it.
+UPDATE: full PoC is now available on Github.
+UPDATE: CVE-2018-14847 has been assigned to this vulnerability and there should be a MetaSploit module related to this bug soon.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://blog.n0p.me/2018/05/2018-05-21-winbox-bug-dissection/"><meta property="og:image" content="https://blog.n0p.me/author.jpg"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2018-05-21T18:18:00+00:00">
+<meta property="article:modified_time" content="2018-05-21T18:18:00+00:00">
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://blog.n0p.me/author.jpg">
+<meta name=twitter:title content="Dissection of Winbox critical vulnerability">
+<meta name=twitter:description content="On April 23rd 2018, Mikrotik fixed a vulnerability &ldquo;that allowed gaining access to an unsecured router&rdquo;. myself and @yalpanian of @BASUCERT (part of IR CERT) reverse engineering lab tried to figure out what exactly got fixed, what was the problem in the first place and how severe was the impact of it.
+UPDATE: full PoC is now available on Github.
+UPDATE: CVE-2018-14847 has been assigned to this vulnerability and there should be a MetaSploit module related to this bug soon.">
+<meta name=application-name content="n0p Blog">
+<meta name=apple-mobile-web-app-title content="n0p Blog"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico>
+<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
+<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=manifest href=/site.webmanifest><link rel=canonical href=https://blog.n0p.me/2018/05/2018-05-21-winbox-bug-dissection/><link rel=prev href=https://blog.n0p.me/2018/03/2018-03-27-dynamic-binary-analysis/><link rel=next href=https://blog.n0p.me/2018/12/2018-12-13-hide-in-plain-sight/><link rel=stylesheet href=/lib/normalize/normalize.min.css><link rel=stylesheet href=/css/style.min.css><link rel=stylesheet href=/lib/fontawesome-free/all.min.css><link rel=stylesheet href=/lib/animate/animate.min.css><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"Dissection of Winbox critical vulnerability","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/blog.n0p.me\/2018\/05\/2018-05-21-winbox-bug-dissection\/"},"genre":"posts","keywords":"Mikrotik, Winbox, Path Traversal, Winbox Exploit, Exploit Winbox","wordcount":1053,"url":"https:\/\/blog.n0p.me\/2018\/05\/2018-05-21-winbox-bug-dissection\/","datePublished":"2018-05-21T18:18:00+00:00","dateModified":"2018-05-21T18:18:00+00:00","license":"This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher":{"@type":"Organization","name":"Ali Mosajjal"},"author":{"@type":"Person","name":"Ali Mosajjal"},"description":""}</script></head>
+<body header-desktop header-mobile><script type=text/javascript>(window.localStorage&&localStorage.getItem('theme')?localStorage.getItem('theme')==='dark':''==='auto'?window.matchMedia('(prefers-color-scheme: dark)').matches:''==='dark')&&document.body.setAttribute('theme','dark')</script>
+<div id=mask></div><div class=wrapper><header class=desktop id=header-desktop>
+<div class=header-wrapper>
+<div class=header-title>
+<a href=/ title="n0p Blog">n0p Blog</a>
+</div>
+<div class=menu>
+<div class=menu-inner><a class=menu-item href=/posts> Posts </a><a class=menu-item href=/tags> Tags </a><a class=menu-item href=/categories> Categories </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop>
+<input type=text placeholder="Search titles or contents..." id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=Search>
+<i class="fas fa-search fa-fw"></i>
+</a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=Clear>
+<i class="fas fa-times-circle fa-fw"></i>
+</a>
+<span class="search-button search-loading" id=search-loading-desktop>
+<i class="fas fa-spinner fa-fw fa-spin"></i>
+</span>
+</span><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme">
+<i class="fas fa-adjust fa-fw"></i>
+</a>
+</div>
+</div>
+</div>
+</header><header class=mobile id=header-mobile>
+<div class=header-container>
+<div class=header-wrapper>
+<div class=header-title>
+<a href=/ title="n0p Blog">n0p Blog</a>
+</div>
+<div class=menu-toggle id=menu-toggle-mobile>
+<span></span><span></span><span></span>
+</div>
+</div>
+<div class=menu id=menu-mobile><div class=search-wrapper>
+<div class="search mobile" id=search-mobile>
+<input type=text placeholder="Search titles or contents..." id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=Search>
+<i class="fas fa-search fa-fw"></i>
+</a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=Clear>
+<i class="fas fa-times-circle fa-fw"></i>
+</a>
+<span class="search-button search-loading" id=search-loading-mobile>
+<i class="fas fa-spinner fa-fw fa-spin"></i>
+</span>
+</div>
+<a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>
+Cancel
+</a>
+</div><a class=menu-item href=/posts title>Posts</a><a class=menu-item href=/tags title>Tags</a><a class=menu-item href=/categories title>Categories</a><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme">
+<i class="fas fa-adjust fa-fw"></i>
+</a></div>
+</div>
+</header>
+<div class="search-dropdown desktop">
+<div id=search-dropdown-desktop></div>
+</div>
+<div class="search-dropdown mobile">
+<div id=search-dropdown-mobile></div>
+</div>
+<main class=main>
+<div class=container><div class=toc id=toc-auto>
+<h2 class=toc-title>Contents</h2>
+<div class=toc-content id=toc-content-auto></div>
+</div><article class="page single"><h1 class="single-title animated flipInX">Dissection of Winbox critical vulnerability</h1><div class=post-meta>
+<div class=post-meta-line><span class=post-author><a href=/ title=Author rel=" author" class=author><i class="fas fa-user-circle fa-fw"></i>Ali Mosajjal</a></span>&nbsp;<span class=post-category>included in <a href=/categories/reverse-engineering/><i class="far fa-folder fa-fw"></i>Reverse Engineering</a></span></div>
+<div class=post-meta-line><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime=2018-05-21>2018-05-21</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;1053 words&nbsp;
+<i class="far fa-clock fa-fw"></i>&nbsp;5 minutes&nbsp;</div>
+</div><div class="details toc" id=toc-static kept>
+<div class="details-summary toc-title">
+<span>Contents</span>
+<span><i class="details-icon fas fa-angle-right"></i></span>
+</div>
+<div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents>
+<ul>
+<li><a href=#what-is-mikrotik>What is Mikrotik</a></li>
+<li><a href=#the-diff>The Diff</a></li>
+<li><a href=#lets-dive-into-mproxy>Let&rsquo;s Dive Into &ldquo;mproxy&rdquo;</a></li>
+<li><a href=#jailbreak-the-device-and-turn-on-gdb>Jailbreak The Device and Turn on GDB</a></li>
+<li><a href=#sending-the-packets>Sending the Packets</a></li>
+<li><a href=#decoding-the-user-database>Decoding the User Database</a></li>
+<li><a href=#what-did-we-learn>What did we Learn?</a></li>
+</ul>
+</nav></div>
+</div><div class=content id=content><p><img class=lazyload src=/svg/loading.min.svg data-src=/img/mikrotik-winbox/morphus-meme.jpg data-srcset="/img/mikrotik-winbox/morphus-meme.jpg, /img/mikrotik-winbox/morphus-meme.jpg 1.5x, /img/mikrotik-winbox/morphus-meme.jpg 2x" data-sizes=auto alt=/img/mikrotik-winbox/morphus-meme.jpg title=Morphus></p>
+<p>On April 23rd 2018, Mikrotik fixed a vulnerability &ldquo;that allowed gaining access to an unsecured router&rdquo;. myself and <a href=https://twitter.com/yalpanian target=_blank rel="noopener noreffer">@yalpanian</a> of <a href=https://twitter.com/BASUCERT target=_blank rel="noopener noreffer">@BASUCERT</a> (part of <a href=https://cert.ir target=_blank rel="noopener noreffer">IR CERT</a>) reverse engineering lab tried to figure out what exactly got fixed, what was the problem in the first place and how severe was the impact of it.</p>
+<p>UPDATE: full PoC is now available on <a href=https://github.com/BasuCert/WinboxPoC target=_blank rel="noopener noreffer">Github</a>.</p>
+<p>UPDATE: CVE-2018-14847 has been assigned to this vulnerability and there should be a MetaSploit module related to this bug soon.</p>
+<h2 id=what-is-mikrotik>What is Mikrotik</h2>
+<p>According to the official website, MikroTik is a Latvian company which was founded in 1996 to develop routers and wireless ISP systems. MikroTik now provides hardware and software for Internet connectivity in most of the countries around the world.</p>
+<p>RouterOS is the operating system of most Mikrotik devices. The vulnerability affects all versions of RouterOS from 6.29 (release date: 2015/28/05) to 6.42 (release date 2018/04/20)</p>
+<h2 id=the-diff>The Diff</h2>
+<p>First things first, we had to see which binaries was changed before and after the patching. RouterOS is written on top of Linux Kernel so a lot of kernel modules will be different in each version. What we did was downloading RouterOS 6.40.7 and 6.40.8 npk files and look through each file to find the differences. I just named them &ldquo;after&rdquo; and &ldquo;before&rdquo; on my laptop. I hashed every file inside those packages to see the difference, and long behold I found a few. As you can see, mproxy binary has changed. Which makes sense because mproxy binary handles all Winbox requests.</p>
+<p><img class=lazyload src=/svg/loading.min.svg data-src=/img/mikrotik-winbox/mproxy-diff.png data-srcset="/img/mikrotik-winbox/mproxy-diff.png, /img/mikrotik-winbox/mproxy-diff.png 1.5x, /img/mikrotik-winbox/mproxy-diff.png 2x" data-sizes=auto alt=/img/mikrotik-winbox/mproxy-diff.png title=image></p>
+<h2 id=lets-dive-into-mproxy>Let&rsquo;s Dive Into &ldquo;mproxy&rdquo;</h2>
+<p>mproxy is a 63K binary with no (except for a simple NX section) security measurements. So this bug could&rsquo;ve been anything memory related. we ran bindiff on the files and found some differences between the two versions, but there was a simple &ldquo;if&rdquo; statement which was added to the file.</p>
+<p><img class=lazyload src=/svg/loading.min.svg data-src=/img/mikrotik-winbox/bindiff.jpg data-srcset="/img/mikrotik-winbox/bindiff.jpg, /img/mikrotik-winbox/bindiff.jpg 1.5x, /img/mikrotik-winbox/bindiff.jpg 2x" data-sizes=auto alt=/img/mikrotik-winbox/bindiff.jpg title=image></p>
+<h2 id=jailbreak-the-device-and-turn-on-gdb>Jailbreak The Device and Turn on GDB</h2>
+<p>So, how can we confirm this? We don&rsquo;t have GDB and we don&rsquo;t have a shell (yet). After some digging around, we found an interesting project <a href=https://github.com/0ki/mikrotik-tools target=_blank rel="noopener noreffer">&ldquo;mikrotik-tools&rdquo;</a>. It shows an easy way to get a bash shell inside a RouterOS and copy additional binaries to its filesystem. So we added a new and big BusyBox in addition to a gdbserver to do the job for us.
+It was pretty easy on VM since all you need to do is mount RouterOS vmdk somewhere and add additional files. After that the RouterOS will boot and it&rsquo;ll login with &ldquo;devel&rdquo; account with the same password as your admin account. In that telnet session, there&rsquo;s no RouterOS shell, instead, it&rsquo;s bash! easy :-)</p>
+<p>After putting a breakpoint on the &ldquo;list&rdquo; string, we started digging around and finally got the string which bypasses the first condition without violating any rules. Since the code scans the strings 4 bytes at a time, we could place our dots between them so it couldn&rsquo;t be discovered by the code.</p>
+<h2 id=sending-the-packets>Sending the Packets</h2>
+<p>now let&rsquo;s get started on sending some packets across! First, we turn off secure communication between the Router and Winbox just because we can! When looking at the packets, we&rsquo;ll see a tiny conversation between the Router and Winbox and then we&rsquo;ll see the list file being sent to Winbox. This file includes all the necessary DLLs for Winbox to use in order to communicate with the Router. Interestingly, this approach has had more than a couple security flaws. Just think about it, you download an unknown DLL from a remote host and you run it under Winbox, a signed executable! But that&rsquo;s for another blog post. Right now, we want to switch off this list with our crafted string. Here&rsquo;s the original conversation:</p>
+<p><img class=lazyload src=/svg/loading.min.svg data-src=/img/mikrotik-winbox/wireshark-list.png data-srcset="/img/mikrotik-winbox/wireshark-list.png, /img/mikrotik-winbox/wireshark-list.png 1.5x, /img/mikrotik-winbox/wireshark-list.png 2x" data-sizes=auto alt=/img/mikrotik-winbox/wireshark-list.png title=image></p>
+<p>So what&rsquo;s so interesting about this conversation? If you look at it closely, you&rsquo;ll see the highlighted packets are not the first in the conversation. First Winbox authenticates with the Router and then tries to get the list file. Pretty safe, right? We thought so too at first, especially since we repeated the same packets and got a &ldquo;bad session id&rdquo; result back from RouterOS. But we noticed something interesting. A single byte is changing each time we send the same request to the Router, and each time we sent that exact same byte over to the Router in our next request.. Session ID? YES! So we did our repeat attack with this tiny modification. We sent the request, waited for the Router to respond, switched that one byte by the byte received from the response, and then we sent the second request. and Voilà! We got our file!! We didn&rsquo;t even need to authenticate! Just by sending the highlighted packets in the right order and switching the byte, the Router folds.</p>
+<p>A general rule of thumb: don&rsquo;t trust the client you shipped to users. Trust your own service to do proper validation :)</p>
+<h2 id=decoding-the-user-database>Decoding the User Database</h2>
+<p>Now we can read ANY file from the Router! Which files are useful? In our previous talk on APA3 conference, we talked about just how insecure Mikrotik is, especially when it comes to handling credentials. In short, Mikrotik uses a very weak encoding (no hash and salt) to store passwords to an index file. So it&rsquo;s entirely possible to download the credential database and extract every username and password stored inside it and that&rsquo;s exactly what we did for this PoC.</p>
+<p>After downloading the idx file, we used another great tool from mikrotik-tools to decrypt the username and password database and dump everything IN PLAIN TEXT !!!</p>
+<h2 id=what-did-we-learn>What did we Learn?</h2>
+<p>Simply put, don&rsquo;t use Mikrotik in an enterprise environment. Not only in poses a security concern for an organization, it will put IT manager&rsquo;s computer at a great risk because of all the external DLLs the winbox.exe binary downloads and executes on the computer (for more info on that check out Slingshot malware). In addition to all this, Mikrotik saves your passwords in easily decryptable ciphers (as you saw in the PoC), which might have an effect on your entire network infrastructure. For example, SNMP passphrases are usually shared across multiple network devices including the Mikrotik router. So if an attacker retrieves your SNMP passphrase, they can launch multiple attacks on your Cisco, Juniper and more secure layer 2/3 devices. As they say: &ldquo;a chain is as strong as its weakest link&rdquo;</p>
+</div><div class=post-footer id=post-footer>
+<div class=post-info>
+<div class=post-info-line>
+<div class=post-info-mod>
+<span>Updated on 2018-05-21</span>
+</div>
+<div class=post-info-license></div>
+</div>
+<div class=post-info-line>
+<div class=post-info-md></div>
+<div class=post-info-share>
+<span></span>
+</div>
+</div>
+</div>
+<div class=post-info-more>
+<section class=post-tags><i class="fas fa-tags fa-fw"></i>&nbsp;<a href=/tags/mikrotik/>Mikrotik</a>,&nbsp;<a href=/tags/winbox/>Winbox</a>,&nbsp;<a href=/tags/path-traversal/>Path Traversal</a>,&nbsp;<a href=/tags/winbox-exploit/>Winbox Exploit</a>,&nbsp;<a href=/tags/exploit-winbox/>Exploit Winbox</a></section>
+<section>
+<span><a href=javascript:void(0); onclick=window.history.back()>Back</a></span>&nbsp;|&nbsp;<span><a href=/>Home</a></span>
+</section>
+</div>
+<div class=post-nav><a href=/2018/03/2018-03-27-dynamic-binary-analysis/ class=prev rel=prev title="Getting started with Dynamic Binary Analysis"><i class="fas fa-angle-left fa-fw"></i>Getting started with Dynamic Binary Analysis</a>
+<a href=/2018/12/2018-12-13-hide-in-plain-sight/ class=next rel=next title="Hide in Plain Sight: Protocol Multiplexers">Hide in Plain Sight: Protocol Multiplexers<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id=comments><div id=disqus_thread class=comment></div><noscript>
+Please enable JavaScript to view the comments powered by <a href=https://disqus.com/?ref_noscript>Disqus</a>.
+</noscript></div></article></div>
+</main><footer class=footer>
+<div class=footer-container><div class=footer-line>Powered by <a href=https://gohugo.io/ target=_blank rel="noopener noreffer" title="Hugo 0.87.0">Hugo</a> | Theme - <a href=https://github.com/dillonzq/LoveIt target=_blank rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+</div><div class=footer-line><i class="far fa-copyright fa-fw"></i><span itemprop=copyrightYear>2021</span><span class=author itemprop=copyrightHolder>&nbsp;<a href=/ target=_blank>Ali Mosajjal</a></span></div>
+</div>
+</footer></div>
+<div id=fixed-buttons><a href=# id=back-to-top class=fixed-button title="Back to Top">
+<i class="fas fa-arrow-up fa-fw"></i>
+</a><a href=# id=view-comments class=fixed-button title="View Comments">
+<i class="fas fa-comment fa-fw"></i>
+</a>
+</div><script type=text/javascript src=https://n0p-me.disqus.com/embed.js defer></script><script type=text/javascript src=/lib/smooth-scroll/smooth-scroll.min.js></script><script type=text/javascript src=/lib/autocomplete/autocomplete.min.js></script><script type=text/javascript src=/lib/lunr/lunr.min.js></script><script type=text/javascript src=/lib/lazysizes/lazysizes.min.js></script><script type=text/javascript src=/lib/clipboard/clipboard.min.js></script><script type=text/javascript>window.config={code:{copyTitle:"Copy to clipboard",maxShownLines:10},comment:{},search:{highlightTag:"em",maxResultLength:10,noResultsFound:"No results found",snippetLength:30}}</script><script type=text/javascript src=/js/theme.min.js></script><script type=text/javascript>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-114664513-1',{anonymize_ip:!0})</script><script type=text/javascript src="https://www.googletagmanager.com/gtag/js?id=UA-114664513-1" async></script></body>
+</html>

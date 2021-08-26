@@ -1,0 +1,655 @@
+<!doctype html><html lang=en>
+<head>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<meta http-equiv=content-security-policy content="upgrade-insecure-requests; block-all-mixed-content; default-src 'self'; child-src 'self'; font-src 'self' disqus.com disquscdn.com *.disqus.com *.disquscdn.com; form-action 'self' https://syndication.twitter.com/ https://platform.twitter.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; frame-src 'self' https://cse.google.com https://player.vimeo.com www.youtube.com www.youtube-nocookie.com https://platform.twitter.com https://syndication.twitter.com  jsfiddle.net www.instagram.com https://kuula.co https://www.slideshare.net https://www.google.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; img-src 'self' https://jeremylikness.visualstudio.com *.gstatic.com *.amazon-adsystem.com https://www.googleapis.com https://images-na.ssl-images-amazon.com https://platform.twitter.com *.twimg.com https://syndication.twitter.com data: https://files.kuula.io disqus.com disquscdn.com *.disqus.com *.disquscdn.com; object-src 'none'; style-src 'self' 'unsafe-inline' https://use.fontawesome.com https://fonts.googleapis.com https://www.google.com https://platform.twitter.com *.twimg.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; script-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; prefetch-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com; connect-src 'self' 'unsafe-inline' https://platform.twitter.com https://static.cloudflareinsights.com disqus.com disquscdn.com *.disqus.com *.disquscdn.com;">
+<meta name=keywords content="[Infosec Blue Team Linux]">
+<meta name=robots content="noodp">
+<meta http-equiv=x-ua-compatible content="IE=edge, chrome=1">
+<title>Parsing a massive DNS PCAP file efficiently - n0p Blog</title><meta name=Description content="n0p Blog"><meta property="og:title" content="Parsing a massive DNS PCAP file efficiently">
+<meta property="og:description" content="The problem statement Say you have a 30GB PCAP full of DNS data, and you want to analyse unusual activity on it. To make things simple, let&rsquo;s see how long it&rsquo;ll take to find a list of IPs that have accessed PSN&rsquo;s domain (prppsn.com) and the timestamp associated with them.
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38  $ perf stat capinfos bigdnssample.">
+<meta property="og:type" content="article">
+<meta property="og:url" content="https://blog.n0p.me/2020/08/2020-08-15-analysing-big-pcap/"><meta property="og:image" content="https://blog.n0p.me/author.jpg"><meta property="article:section" content="posts">
+<meta property="article:published_time" content="2020-08-09T18:18:00+00:00">
+<meta property="article:modified_time" content="2020-08-09T18:18:00+00:00">
+<meta name=twitter:card content="summary_large_image">
+<meta name=twitter:image content="https://blog.n0p.me/author.jpg">
+<meta name=twitter:title content="Parsing a massive DNS PCAP file efficiently">
+<meta name=twitter:description content="The problem statement Say you have a 30GB PCAP full of DNS data, and you want to analyse unusual activity on it. To make things simple, let&rsquo;s see how long it&rsquo;ll take to find a list of IPs that have accessed PSN&rsquo;s domain (prppsn.com) and the timestamp associated with them.
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33 34 35 36 37 38  $ perf stat capinfos bigdnssample.">
+<meta name=application-name content="n0p Blog">
+<meta name=apple-mobile-web-app-title content="n0p Blog"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico>
+<link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png>
+<link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=manifest href=/site.webmanifest><link rel=canonical href=https://blog.n0p.me/2020/08/2020-08-15-analysing-big-pcap/><link rel=prev href=https://blog.n0p.me/2020/02/2020-02-05-dnsmonster/><link rel=next href=https://blog.n0p.me/2020/09/2020-09-28-sshmfahook/><link rel=stylesheet href=/lib/normalize/normalize.min.css><link rel=stylesheet href=/css/style.min.css><link rel=stylesheet href=/lib/fontawesome-free/all.min.css><link rel=stylesheet href=/lib/animate/animate.min.css><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"Parsing a massive DNS PCAP file efficiently","inLanguage":"en","mainEntityOfPage":{"@type":"WebPage","@id":"https:\/\/blog.n0p.me\/2020\/08\/2020-08-15-analysing-big-pcap\/"},"genre":"posts","keywords":"linux, Network, IDS","wordcount":1958,"url":"https:\/\/blog.n0p.me\/2020\/08\/2020-08-15-analysing-big-pcap\/","datePublished":"2020-08-09T18:18:00+00:00","dateModified":"2020-08-09T18:18:00+00:00","license":"This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher":{"@type":"Organization","name":"Ali Mosajjal"},"author":{"@type":"Person","name":"Ali Mosajjal"},"description":""}</script></head>
+<body header-desktop header-mobile><script type=text/javascript>(window.localStorage&&localStorage.getItem('theme')?localStorage.getItem('theme')==='dark':''==='auto'?window.matchMedia('(prefers-color-scheme: dark)').matches:''==='dark')&&document.body.setAttribute('theme','dark')</script>
+<div id=mask></div><div class=wrapper><header class=desktop id=header-desktop>
+<div class=header-wrapper>
+<div class=header-title>
+<a href=/ title="n0p Blog">n0p Blog</a>
+</div>
+<div class=menu>
+<div class=menu-inner><a class=menu-item href=/posts> Posts </a><a class=menu-item href=/tags> Tags </a><a class=menu-item href=/categories> Categories </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop>
+<input type=text placeholder="Search titles or contents..." id=search-input-desktop>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-desktop title=Search>
+<i class="fas fa-search fa-fw"></i>
+</a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-desktop title=Clear>
+<i class="fas fa-times-circle fa-fw"></i>
+</a>
+<span class="search-button search-loading" id=search-loading-desktop>
+<i class="fas fa-spinner fa-fw fa-spin"></i>
+</span>
+</span><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme">
+<i class="fas fa-adjust fa-fw"></i>
+</a>
+</div>
+</div>
+</div>
+</header><header class=mobile id=header-mobile>
+<div class=header-container>
+<div class=header-wrapper>
+<div class=header-title>
+<a href=/ title="n0p Blog">n0p Blog</a>
+</div>
+<div class=menu-toggle id=menu-toggle-mobile>
+<span></span><span></span><span></span>
+</div>
+</div>
+<div class=menu id=menu-mobile><div class=search-wrapper>
+<div class="search mobile" id=search-mobile>
+<input type=text placeholder="Search titles or contents..." id=search-input-mobile>
+<a href=javascript:void(0); class="search-button search-toggle" id=search-toggle-mobile title=Search>
+<i class="fas fa-search fa-fw"></i>
+</a>
+<a href=javascript:void(0); class="search-button search-clear" id=search-clear-mobile title=Clear>
+<i class="fas fa-times-circle fa-fw"></i>
+</a>
+<span class="search-button search-loading" id=search-loading-mobile>
+<i class="fas fa-spinner fa-fw fa-spin"></i>
+</span>
+</div>
+<a href=javascript:void(0); class=search-cancel id=search-cancel-mobile>
+Cancel
+</a>
+</div><a class=menu-item href=/posts title>Posts</a><a class=menu-item href=/tags title>Tags</a><a class=menu-item href=/categories title>Categories</a><a href=javascript:void(0); class="menu-item theme-switch" title="Switch Theme">
+<i class="fas fa-adjust fa-fw"></i>
+</a></div>
+</div>
+</header>
+<div class="search-dropdown desktop">
+<div id=search-dropdown-desktop></div>
+</div>
+<div class="search-dropdown mobile">
+<div id=search-dropdown-mobile></div>
+</div>
+<main class=main>
+<div class=container><div class=toc id=toc-auto>
+<h2 class=toc-title>Contents</h2>
+<div class=toc-content id=toc-content-auto></div>
+</div><article class="page single"><h1 class="single-title animated flipInX">Parsing a massive DNS PCAP file efficiently</h1><div class=post-meta>
+<div class=post-meta-line><span class=post-author><a href=/ title=Author rel=" author" class=author><i class="fas fa-user-circle fa-fw"></i>Ali Mosajjal</a></span>&nbsp;<span class=post-category>included in <a href=/categories/linux/><i class="far fa-folder fa-fw"></i>Linux</a>&nbsp;<a href=/categories/security/><i class="far fa-folder fa-fw"></i>security</a>&nbsp;<a href=/categories/benchmark/><i class="far fa-folder fa-fw"></i>Benchmark</a></span></div>
+<div class=post-meta-line><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime=2020-08-09>2020-08-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;1958 words&nbsp;
+<i class="far fa-clock fa-fw"></i>&nbsp;10 minutes&nbsp;</div>
+</div><div class="details toc" id=toc-static kept>
+<div class="details-summary toc-title">
+<span>Contents</span>
+<span><i class="details-icon fas fa-angle-right"></i></span>
+</div>
+<div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents>
+<ul>
+<li><a href=#whats-our-hardware>What&rsquo;s our hardware</a></li>
+<li><a href=#wireshark>Wireshark</a></li>
+<li><a href=#termshark>Termshark</a></li>
+<li><a href=#tshark-json-output>Tshark JSON output</a></li>
+<li><a href=#packetbeat>Packetbeat</a></li>
+<li><a href=#passivedns>PassiveDNS</a></li>
+<li><a href=#gopassivedns>GoPassiveDNS</a>
+<ul>
+<li><a href=#umpteen-minutes-later-getting-bored>umpteen minutes later, getting bored</a></li>
+</ul>
+</li>
+<li><a href=#suricata>Suricata</a></li>
+<li><a href=#snort>Snort</a></li>
+<li><a href=#dnsmonster-and-clickhouse>DNSMonster and ClickHouse</a></li>
+<li><a href=#conclusion>Conclusion</a></li>
+</ul>
+</nav></div>
+</div><div class=content id=content><h1 id=the-problem-statement>The problem statement</h1>
+<p>Say you have a 30GB PCAP full of DNS data, and you want to analyse unusual activity on it. To make things simple, let&rsquo;s see how long it&rsquo;ll take to find a list of IPs that have accessed PSN&rsquo;s domain (<code>prppsn.com</code>) and the timestamp associated with them.</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ perf stat capinfos bigdnssample.pcap
+
+File name:           bigdnssample.pcap
+File type:           Wireshark/tcpdump/... - pcap
+File encapsulation:  Ethernet
+File timestamp precision:  microseconds <span class=o>(</span>6<span class=o>)</span>
+Packet size limit:   file hdr: <span class=m>65535</span> bytes
+Number of packets:   <span class=m>222</span> M
+File size:           <span class=m>31</span> GB
+Data size:           <span class=m>28</span> GB
+Capture duration:    1210.540079 seconds
+First packet time:   *REDACTED* 
+Last packet time:    *REDACTED* +20 minutes of first packet
+Data byte rate:      <span class=m>23</span> MBps
+Data bit rate:       <span class=m>185</span> Mbps
+Average packet size: 125.93 bytes
+Average packet rate: <span class=m>184</span> kpackets/s
+SHA256:              *REDACTED*
+RIPEMD160:           *REDACTED*
+SHA1:                *REDACTED*
+Strict <span class=nb>time</span> order:   False
+Number of interfaces in file: <span class=m>1</span>
+
+ Performance counter stats <span class=k>for</span> <span class=s1>&#39;capinfos bigdnssample.pcap&#39;</span>:
+
+        235,264.47 msec task-clock:u              <span class=c1>#    0.796 CPUs utilized          </span>
+                 <span class=m>0</span>      context-switches:u        <span class=c1>#    0.000 K/sec                  </span>
+                 <span class=m>0</span>      cpu-migrations:u          <span class=c1>#    0.000 K/sec                  </span>
+               <span class=m>347</span>      page-faults:u             <span class=c1>#    0.001 K/sec                  </span>
+   699,682,435,518      cycles:u                  <span class=c1>#    2.974 GHz                    </span>
+ 2,359,352,338,719      instructions:u            <span class=c1>#    3.37  insn per cycle         </span>
+    36,761,315,016      branches:u                <span class=c1>#  156.255 M/sec                  </span>
+       152,805,051      branch-misses:u           <span class=c1>#    0.42% of all branches        </span>
+
+     295.708867452 seconds <span class=nb>time</span> elapsed
+
+     209.632593000 seconds user
+      26.655789000 seconds sys
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=whats-our-hardware>What&rsquo;s our hardware</h2>
+<p>My laptop:</p>
+<p>OS: Arch Linux
+Kernel: x86_64 Linux 5.7.7-arch1-1
+Disk: Timing cached reads: 25744 MB in 1.99 seconds = 12915.87 MB/sec, Timing buffered disk reads: 1314 MB in 3.00 seconds = 437.48 MB/sec
+CPU: Intel Core i5-8350U @ 8x 3.6GHz
+RAM: 32GB</p>
+<h2 id=wireshark>Wireshark</h2>
+<p>This one was easy to dismiss since it didn&rsquo;t even get to 10% of the packets before filling up the RAM and basically died.</p>
+<h2 id=termshark>Termshark</h2>
+<p>Terminal brother of Wireshark dies on 6%. But overall a quite nice binary. I&rsquo;ll probably add it to my binary collection since it&rsquo;s basically wireshark in terminal. Almost perfect mouse support as well.</p>
+<h2 id=tshark-json-output>Tshark JSON output</h2>
+<p>From now on, the solutions are going to work in &ldquo;stream&rdquo;, meaning they probably won&rsquo;t run out of RAM and the question becomes the speed of the solution rather than weather it&rsquo;ll work or not. For the purpose of benchmarking these, I&rsquo;m gonna use compact JSON format output of <code>tshark</code>, and then pipe it to PV to measure lines/second being written to stdout. That way we can have a feeling of how long will it take to actually parse this massive PCAP</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback>$ command | pv --line-mode --rate &gt; /dev/null
+</code></pre></td></tr></table>
+</div>
+</div><div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback>TShark (Wireshark) 3.2.5 (Git commit ed20ddea8138)
+
+Compiled (64-bit) with libpcap, with POSIX capabilities (Linux), with libnl 3,
+with GLib 2.64.4, with zlib 1.2.11, without SMI, with c-ares 1.16.1, with Lua
+5.2.4, with GnuTLS 3.6.14 and PKCS #11 support, with Gcrypt 1.8.6, with MIT
+Kerberos, with MaxMind DB resolver, with nghttp2 1.41.0, with brotli, with LZ4,
+with Zstandard, with Snappy, with libxml2 2.9.10.
+</code></pre></td></tr></table>
+</div>
+</div><div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ tshark -T jsonraw -r bigdnssample.pcap <span class=p>|</span> sed -e <span class=s2>&#34;s/^  },</span>$<span class=s2>/ },\r/g&#34;</span> <span class=p>|</span> tr -d <span class=s1>&#39;\n&#39;</span> <span class=p>|</span> tr -s <span class=s1>&#39;\r&#39;</span> <span class=s1>&#39;\n&#39;</span> <span class=p>|</span> pv --line-mode --rate &gt; /dev/null
+~<span class=o>[</span>3.5k/s<span class=o>]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Note that looking at my <code>gotop</code>, <code>sed</code> and <code>tr</code> are not the bottlenecks since <code>tshark</code> was filling up a core of CPU and it&rsquo;s a single-core binary</p>
+<p>Now let&rsquo;s see how long it&rsquo;ll take for <code>tshark</code> to solve our problem</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ perf stat tshark -r bigdnssample.pcap -2 -R <span class=s1>&#39;dns.qry.name matches prppsn.com&#39;</span>
+...
+</code></pre></td></tr></table>
+</div>
+</div><p>sadly <code>tshark</code> died on me before giving any results (in ~900 seconds) since it filled up my RAM and crashed.. RIP!</p>
+<h2 id=packetbeat>Packetbeat</h2>
+<p>packetbeat version:
+<code>packetbeat version 7.7.1 (amd64), libbeat 7.7.1 [unknown built unknown]</code></p>
+<p>I&rsquo;ve made a pretty simple <code>packetbeat.yml</code> just to demonstrate DNS traffic within the file</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=nt>packetbeat.protocols</span><span class=p>:</span><span class=w>
+</span><span class=w></span>- <span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>dns</span><span class=w>
+</span><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=m>53</span><span class=p>]</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=nt>output.console</span><span class=p>:</span><span class=w>
+</span><span class=w>  </span><span class=nt>pretty</span><span class=p>:</span><span class=w> </span><span class=kc>false</span><span class=w>
+</span></code></pre></td></tr></table>
+</div>
+</div><div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ packetbeat -c packetbeat.yml -I bigdnssample.pcap <span class=p>|</span>  pv --line-mode --rate &gt; /dev/null
+~<span class=o>[</span>6.5k/s<span class=o>]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Getting a bit better, almost twice as fast a <code>tshark</code>! Although I should mention that this is technically cheating since <code>tshark</code> does ALL protocols + a lot of packet info that <code>packetbeat</code> misses.</p>
+<p>So now the logical next step would be to push this to ES and search it, right? wrong! At this stage I&rsquo;m not very interested in benchmarking ES, only the packet parser. hence I&rsquo;m gonna rely on <code>rg</code> to see how long it&rsquo;ll take to dish out what I need. <em>Later in this blogpost, I&rsquo;ll compare the search engines</em></p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-json data-lang=json><span class=err>perf</span> <span class=err>stat</span> <span class=err>packetbeat</span> <span class=err>-c</span> <span class=err>packetbeat.yml</span> <span class=err>-I</span> <span class=err>bigdnssample.pcap</span> <span class=err>|</span> <span class=err>rg</span> <span class=err>&#39;prppsn.com&#39;</span>
+
+<span class=err>...</span>
+<span class=p>{</span><span class=nt>&#34;@timestamp&#34;</span><span class=p>:</span><span class=s2>&#34;2020-08-09T05:11:59.487Z&#34;</span><span class=p>,</span><span class=nt>&#34;@metadata&#34;</span><span class=p>:{</span><span class=nt>&#34;beat&#34;</span><span class=p>:</span><span class=s2>&#34;packetbeat&#34;</span><span class=p>,</span><span class=nt>&#34;type&#34;</span><span class=p>:</span><span class=s2>&#34;_doc&#34;</span><span class=p>,</span><span class=nt>&#34;version&#34;</span><span class=p>:</span><span class=s2>&#34;7.7.1&#34;</span><span class=p>},</span><span class=nt>&#34;network&#34;</span><span class=p>:{</span><span class=nt>&#34;community_id&#34;</span><span class=p>:</span><span class=s2>&#34;1:pBBz9d/Bym26AyfI+91kH6HRfYs=&#34;</span><span class=p>,</span><span class=nt>&#34;bytes&#34;</span><span class=p>:</span><span class=mi>952</span><span class=p>,</span><span class=nt>&#34;type&#34;</span><span class=p>:</span><span class=s2>&#34;ipv4&#34;</span><span class=p>,</span><span class=nt>&#34;transport&#34;</span><span class=p>:</span><span class=s2>&#34;udp&#34;</span><span class=p>,</span><span class=nt>&#34;protocol&#34;</span><span class=p>:</span><span class=s2>&#34;dns&#34;</span><span class=p>},</span><span class=nt>&#34;method&#34;</span><span class=p>:</span><span class=s2>&#34;QUERY&#34;</span><span class=p>,</span><span class=nt>&#34;source&#34;</span><span class=p>:{</span><span class=nt>&#34;ip&#34;</span><span class=p>:</span><span class=s2>&#34;x.x.x.x&#34;</span><span class=p>,</span><span class=nt>&#34;port&#34;</span><span class=p>:</span><span class=mi>24609</span><span class=p>,</span><span class=nt>&#34;bytes&#34;</span><span class=p>:</span><span class=mi>42</span><span class=p>},</span><span class=nt>&#34;host&#34;</span><span class=p>:{</span><span class=nt>&#34;name&#34;</span><span class=p>:</span><span class=s2>&#34;ali-pc&#34;</span><span class=p>},</span><span class=nt>&#34;destination&#34;</span><span class=p>:{</span><span class=nt>&#34;ip&#34;</span><span class=p>:</span><span class=s2>&#34;y.y.y.y&#34;</span><span class=p>,</span><span class=nt>&#34;port&#34;</span><span class=p>:</span><span class=mi>53</span><span class=p>,</span><span class=nt>&#34;bytes&#34;</span><span class=p>:</span><span class=mi>910</span><span class=p>},</span><span class=nt>&#34;client&#34;</span><span class=p>:{</span><span class=nt>&#34;ip&#34;</span><span class=p>:</span><span class=s2>&#34;x.x.x.x&#34;</span><span class=p>,</span><span class=nt>&#34;port&#34;</span><span class=p>:</span><span class=mi>24609</span><span class=p>,</span><span class=nt>&#34;bytes&#34;</span><span class=p>:</span><span class=mi>42</span><span class=p>},</span><span class=nt>&#34;status&#34;</span><span class=p>:</span><span class=s2>&#34;OK&#34;</span><span class=p>,</span><span class=nt>&#34;agent&#34;</span><span class=p>:{</span><span class=nt>&#34;id&#34;</span><span class=p>:</span><span class=s2>&#34;a28299f5-058a-43d1-9d43-eaafc45c112d&#34;</span><span class=p>,</span><span class=nt>&#34;version&#34;</span><span class=p>:</span><span class=s2>&#34;7.7.1&#34;</span><span class=p>,</span><span class=nt>&#34;type&#34;</span><span class=p>:</span><span class=s2>&#34;packetbeat&#34;</span><span class=p>,</span><span class=nt>&#34;ephemeral_id&#34;</span><span class=p>:</span><span class=s2>&#34;7b8a8b2a-9a5e-4f69-ab78-bd48e2e4d7a6&#34;</span><span class=p>,</span><span class=nt>&#34;hostname&#34;</span><span class=p>:</span><span class=s2>&#34;ali-pc&#34;</span><span class=p>},</span><span class=nt>&#34;resource&#34;</span><span class=p>:</span><span class=s2>&#34;p5.prppsn.com&#34;</span><span class=p>,</span><span class=nt>&#34;query&#34;</span><span class=p>:</span><span class=s2>&#34;class IN, type A, p5.prppsn.com&#34;</span><span class=p>,</span><span class=nt>&#34;server&#34;</span><span class=p>:{</span><span class=nt>&#34;bytes&#34;</span><span class=p>:</span><span class=mi>910</span><span class=p>,</span><span class=nt>&#34;ip&#34;</span><span class=p>:</span><span class=s2>&#34;y.y.y.y&#34;</span><span class=p>,</span><span class=nt>&#34;port&#34;</span><span class=p>:</span><span class=mi>53</span><span class=p>},</span><span class=nt>&#34;type&#34;</span><span class=p>:</span><span class=s2>&#34;dns&#34;</span><span class=p>,</span><span class=nt>&#34;event&#34;</span><span class=p>:{</span><span class=nt>&#34;kind&#34;</span><span class=p>:</span><span class=s2>&#34;event&#34;</span><span class=p>,</span><span class=nt>&#34;category&#34;</span><span class=p>:</span><span class=s2>&#34;network_traffic&#34;</span><span class=p>,</span><span class=nt>&#34;dataset&#34;</span><span class=p>:</span><span class=s2>&#34;dns&#34;</span><span class=p>,</span><span class=nt>&#34;duration&#34;</span><span class=p>:</span><span class=mi>511439322</span><span class=p>,</span><span class=nt>&#34;start&#34;</span><span class=p>:</span><span class=s2>&#34;2020-08-09T05:11:59.487Z&#34;</span><span class=p>,</span><span class=nt>&#34;end&#34;</span><span class=p>:</span><span class=s2>&#34;2020-08-09T05:11:59.999Z&#34;</span><span class=p>},</span><span class=nt>&#34;dns&#34;</span><span class=p>:{</span><span class=nt>&#34;type&#34;</span><span class=p>:</span><span class=s2>&#34;answer&#34;</span><span class=p>,</span><span class=nt>&#34;header_flags&#34;</span><span class=p>:[</span><span class=s2>&#34;DO&#34;</span><span class=p>],</span><span class=nt>&#34;answers_count&#34;</span><span class=p>:</span><span class=mi>0</span><span class=p>,</span><span class=nt>&#34;id&#34;</span><span class=p>:</span><span class=mi>23793</span><span class=p>,</span><span class=nt>&#34;response_code&#34;</span><span class=p>:</span><span class=s2>&#34;NOERROR&#34;</span><span class=p>,</span><span class=nt>&#34;opt&#34;</span><span class=p>:{</span><span class=nt>&#34;do&#34;</span><span class=p>:</span><span class=kc>true</span><span class=p>,</span><span class=nt>&#34;version&#34;</span><span class=p>:</span><span class=s2>&#34;0&#34;</span><span class=p>,</span><span class=nt>&#34;udp_size&#34;</span><span class=p>:</span><span class=mi>4096</span><span class=p>,</span><span class=nt>&#34;ext_rcode&#34;</span><span class=p>:</span><span class=s2>&#34;NOERROR&#34;</span><span class=p>},</span><span class=nt>&#34;additionals_count&#34;</span><span class=p>:</span><span class=mi>12</span><span class=p>,</span><span class=nt>&#34;authorities_count&#34;</span><span class=p>:</span><span class=mi>6</span><span class=p>,</span><span class=nt>&#34;op_code&#34;</span><span class=p>:</span><span class=s2>&#34;QUERY&#34;</span><span class=p>,</span><span class=nt>&#34;flags&#34;</span><span class=p>:{</span><span class=nt>&#34;recursion_desired&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>,</span><span class=nt>&#34;recursion_available&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>,</span><span class=nt>&#34;authentic_data&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>,</span><span class=nt>&#34;checking_disabled&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>,</span><span class=nt>&#34;authoritative&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>,</span><span class=nt>&#34;truncated_response&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>},</span><span class=nt>&#34;question&#34;</span><span class=p>:{</span><span class=nt>&#34;etld_plus_one&#34;</span><span class=p>:</span><span class=s2>&#34;prppsn.com&#34;</span><span class=p>,</span><span class=nt>&#34;registered_domain&#34;</span><span class=p>:</span><span class=s2>&#34;prppsn.com&#34;</span><span class=p>,</span><span class=nt>&#34;top_level_domain&#34;</span><span class=p>:</span><span class=s2>&#34;com&#34;</span><span class=p>,</span><span class=nt>&#34;subdomain&#34;</span><span class=p>:</span><span class=s2>&#34;p5&#34;</span><span class=p>,</span><span class=nt>&#34;name&#34;</span><span class=p>:</span><span class=s2>&#34;p5.prppsn.com&#34;</span><span class=p>,</span><span class=nt>&#34;type&#34;</span><span class=p>:</span><span class=s2>&#34;A&#34;</span><span class=p>,</span><span class=nt>&#34;class&#34;</span><span class=p>:</span><span class=s2>&#34;IN&#34;</span><span class=p>}},</span><span class=nt>&#34;ecs&#34;</span><span class=p>:{</span><span class=nt>&#34;version&#34;</span><span class=p>:</span><span class=s2>&#34;1.5.0&#34;</span><span class=p>}}</span>
+<span class=err>...</span>
+
+<span class=err>Gave</span> <span class=err>up</span> <span class=err>after</span> <span class=mi>6200</span> <span class=err>seconds,</span> <span class=mi>32</span> <span class=err>results</span> <span class=err>are</span> <span class=err>returned</span> 
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=passivedns>PassiveDNS</h2>
+<p>version:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh><span class=o>[</span>*<span class=o>]</span> PassiveDNS 1.2.1
+<span class=o>[</span>*<span class=o>]</span> By Edward Bjarte Fjellskål &lt;edward.fjellskaal@gmail.com&gt;
+<span class=o>[</span>*<span class=o>]</span> Using libpcap version 1.9.0-PRE-GIT <span class=o>(</span>with TPACKET_V3<span class=o>)</span>
+<span class=o>[</span>*<span class=o>]</span> Using ldns version 1.7.0
+</code></pre></td></tr></table>
+</div>
+</div><div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ pdns -r bigdnssample.pcap -j -l /dev/stdout -L /dev/null <span class=p>|</span>  pv --line-mode --rate &gt; /dev/null
+~<span class=o>[</span>3k/s<span class=o>]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p><code>passivedns</code> turned out to be a big disappointment, mainly due to the fact that it&rsquo;s single-core and single threaded. But let&rsquo;s go through the <code>prppsn.com</code> search to see what happens anyway</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-json data-lang=json><span class=err>$</span> <span class=err>perf</span> <span class=err>stat</span> <span class=err>pdns</span> <span class=err>-r</span> <span class=err>bigdnssample.pcap</span> <span class=err>-j</span> <span class=err>-l</span> <span class=err>/dev/stdout</span> <span class=err>-L</span> <span class=err>/dev/</span><span class=kc>null</span> <span class=err>|</span>  <span class=err>rg</span> <span class=err>&#39;prppsn.com&#39;</span>
+
+<span class=err>...</span>
+<span class=p>{</span><span class=nt>&#34;timestamp_s&#34;</span><span class=p>:</span><span class=err>*REDACTED*</span><span class=p>,</span><span class=nt>&#34;timestamp_ms&#34;</span><span class=p>:</span><span class=mi>50069</span><span class=p>,</span><span class=nt>&#34;client&#34;</span><span class=p>:</span><span class=s2>&#34;x.x.x.x&#34;</span><span class=p>,</span><span class=nt>&#34;server&#34;</span><span class=p>:</span><span class=s2>&#34;y.y.y.y&#34;</span><span class=p>,</span><span class=nt>&#34;class&#34;</span><span class=p>:</span><span class=s2>&#34;IN&#34;</span><span class=p>,</span><span class=nt>&#34;query&#34;</span><span class=p>:</span><span class=s2>&#34;p8.prppsn.com.&#34;</span><span class=p>,</span><span class=nt>&#34;type&#34;</span><span class=p>:</span><span class=s2>&#34;CNAME&#34;</span><span class=p>,</span><span class=nt>&#34;answer&#34;</span><span class=p>:</span><span class=s2>&#34;i5u70.drt.cdn13.com.&#34;</span><span class=p>,</span><span class=nt>&#34;ttl&#34;</span><span class=p>:</span><span class=mi>300</span><span class=p>,</span><span class=nt>&#34;count&#34;</span><span class=p>:</span><span class=mi>1</span><span class=p>}</span>
+<span class=err>...</span>
+<span class=err>Gave</span> <span class=err>up</span> <span class=err>after</span> <span class=mi>6000</span> <span class=err>seconds,</span> <span class=mi>10</span> <span class=err>results</span> <span class=err>are</span> <span class=err>returned</span> <span class=err>during</span> <span class=err>this</span> <span class=err>time</span>
+
+</code></pre></td></tr></table>
+</div>
+</div><h2 id=gopassivedns>GoPassiveDNS</h2>
+<p>version:</p>
+<p>since <code>gopassivedns</code> doesn&rsquo;t have a versioning system, I&rsquo;ll put the last commit hash here for reference: <code>9397838f12864410c26f6e7b6b2a1b59f3746698</code></p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ gopassivedns -pcap bigdnssample.pcap <span class=p>|</span>  pv --line-mode --rate &gt; /dev/null
+~<span class=o>[</span>100k/s<span class=o>]</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Ok ok looks promising. Let&rsquo;s do our test against <code>gopassivedns</code> and see what happens</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-json data-lang=json><span class=err>$</span> <span class=err>perf</span> <span class=err>stat</span> <span class=err>gopassivedns</span> <span class=err>-pcap</span> <span class=err>bigdnssample.pcap</span> <span class=err>|</span>  <span class=err>rg</span> <span class=err>&#39;prppsn.com&#39;</span>
+
+<span class=err>...</span>
+<span class=p>{</span><span class=nt>&#34;query_id&#34;</span><span class=p>:</span><span class=mi>48129</span><span class=p>,</span><span class=nt>&#34;rcode&#34;</span><span class=p>:</span><span class=mi>0</span><span class=p>,</span><span class=nt>&#34;q&#34;</span><span class=p>:</span><span class=s2>&#34;p0.prppsn.com&#34;</span><span class=p>,</span><span class=nt>&#34;qtype&#34;</span><span class=p>:</span><span class=s2>&#34;A&#34;</span><span class=p>,</span><span class=nt>&#34;a&#34;</span><span class=p>:</span><span class=s2>&#34;i5u70.drt.cdn13.com&#34;</span><span class=p>,</span><span class=nt>&#34;atype&#34;</span><span class=p>:</span><span class=s2>&#34;CNAME&#34;</span><span class=p>,</span><span class=nt>&#34;ttl&#34;</span><span class=p>:</span><span class=mi>121</span><span class=p>,</span><span class=nt>&#34;dst&#34;</span><span class=p>:</span><span class=s2>&#34;y.y.y.y&#34;</span><span class=p>,</span><span class=nt>&#34;src&#34;</span><span class=p>:</span><span class=s2>&#34;x.x.x.x&#34;</span><span class=p>,</span><span class=nt>&#34;tstamp&#34;</span><span class=p>:</span><span class=s2>&#34;2020-08-09 05:13:11.384622396 +0000 UTC&#34;</span><span class=p>,</span><span class=nt>&#34;elapsed&#34;</span><span class=p>:</span><span class=mi>103779687478393</span><span class=p>,</span><span class=nt>&#34;sport&#34;</span><span class=p>:</span><span class=s2>&#34;28159&#34;</span><span class=p>,</span><span class=nt>&#34;level&#34;</span><span class=p>:</span><span class=s2>&#34;&#34;</span><span class=p>,</span><span class=nt>&#34;bytes&#34;</span><span class=p>:</span><span class=mi>135</span><span class=p>,</span><span class=nt>&#34;protocol&#34;</span><span class=p>:</span><span class=s2>&#34;udp&#34;</span><span class=p>,</span><span class=nt>&#34;truncated&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>,</span><span class=nt>&#34;aa&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>,</span><span class=nt>&#34;rd&#34;</span><span class=p>:</span><span class=kc>true</span><span class=p>,</span><span class=nt>&#34;ra&#34;</span><span class=p>:</span><span class=kc>false</span><span class=p>}</span>
+<span class=err>...</span>
+
+ <span class=err>Performance</span> <span class=err>counter</span> <span class=err>stats</span> <span class=err>for</span> <span class=err>&#39;gopassivedns</span> <span class=err>-pcap</span> <span class=err>bigdnssample.pcap&#39;:</span>
+
+      <span class=mi>8</span><span class=err>,</span><span class=mi>273</span><span class=err>,</span><span class=mf>326.76</span> <span class=err>msec</span> <span class=err>task-clock:u</span>              <span class=err>#</span>    <span class=mf>1.556</span> <span class=err>CPUs</span> <span class=err>utilized</span>          
+                 <span class=mi>0</span>      <span class=err>context-switches:u</span>        <span class=err>#</span>    <span class=mf>0.000</span> <span class=err>K/sec</span>                  
+                 <span class=mi>0</span>      <span class=err>cpu-migrations:u</span>          <span class=err>#</span>    <span class=mf>0.000</span> <span class=err>K/sec</span>                  
+            <span class=mi>53</span><span class=err>,</span><span class=mi>381</span>      <span class=err>page-faults:u</span>             <span class=err>#</span>    <span class=mf>0.006</span> <span class=err>K/sec</span>                  
+<span class=mi>16</span><span class=err>,</span><span class=mi>854</span><span class=err>,</span><span class=mi>776</span><span class=err>,</span><span class=mi>994</span><span class=err>,</span><span class=mi>690</span>      <span class=err>cycles:u</span>                  <span class=err>#</span>    <span class=mf>2.037</span> <span class=err>GHz</span>                    
+<span class=mi>21</span><span class=err>,</span><span class=mi>366</span><span class=err>,</span><span class=mi>259</span><span class=err>,</span><span class=mi>885</span><span class=err>,</span><span class=mi>030</span>      <span class=err>instructions:u</span>            <span class=err>#</span>    <span class=mf>1.27</span>  <span class=err>insn</span> <span class=err>per</span> <span class=err>cycle</span>         
+ <span class=mi>4</span><span class=err>,</span><span class=mi>717</span><span class=err>,</span><span class=mi>723</span><span class=err>,</span><span class=mi>735</span><span class=err>,</span><span class=mi>096</span>      <span class=err>branches:u</span>                <span class=err>#</span>  <span class=mf>570.233</span> <span class=err>M/sec</span>                  
+    <span class=mi>53</span><span class=err>,</span><span class=mi>260</span><span class=err>,</span><span class=mi>241</span><span class=err>,</span><span class=mi>533</span>      <span class=err>branch-misses:u</span>           <span class=err>#</span>    <span class=mf>1.13</span><span class=err>%</span> <span class=err>of</span> <span class=err>all</span> <span class=err>branches</span>        
+
+    <span class=mf>5317.668579857</span> <span class=err>seconds</span> <span class=err>time</span> <span class=err>elapsed</span>
+
+    <span class=mf>7181.536296000</span> <span class=err>seconds</span> <span class=err>user</span>
+    <span class=mf>1316.158187000</span> <span class=err>seconds</span> <span class=err>sys</span>
+
+<span class=mi>106</span> <span class=err>results</span> <span class=err>returned.</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>so, our fastest tool, took 5317 seconds to crunch 1200 seconds worth of DNS data. Nowhere near good enough.</p>
+<h3 id=umpteen-minutes-later-getting-bored>umpteen minutes later, getting bored</h3>
+<p>Biggest takeaway from the previous tools: By design, they can&rsquo;t handle traffic thrown at them with this rate. ~20 minutes worth of traffic takes well over ~20 minutes to be parsed by any of these tools and except for <code>tshark</code>, none of the tools fully utilized the resources thrown at them, and all 4 maxed out at using 20% of my CPU capacity.</p>
+<p>Max RAM usage of <code>packetbeat</code> was 0.3%, while <code>gopassivedns</code> was at 0.2% and <code>passivedns</code> was sitting at 3.7% max. For those who are wondering, disk I/O was well under 10% after the initialization of all of these platform. The next logical step would be to turn to solutions that are designed to be equipped to deal with large quantities of data at high rate: IDS/IPS solutions.</p>
+<h2 id=suricata>Suricata</h2>
+<p>Suricata is supposed to be very fast at parsing packets, leveraging all full CPU capacity and utilizing a very fast Lua JIT as well as some Rust enhancement to the code. Let&rsquo;s try the following version:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ suricata -V
+
+This is Suricata version 6.0.0-dev <span class=o>(</span>db75675f4 2020-07-09<span class=o>)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Suricata rule:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback>alert udp any any -&gt; any 53 ( msg:&#34;Is this really PSN?&#34;;  content:&#34;prppsn&#34;; nocase; priority:3; )
+</code></pre></td></tr></table>
+</div>
+</div><p>Command:</p>
+<p>After making a Suricata folder to keep all the Suricata log outputs separated, I used the following to initiate the packet process</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ perf stat sudo  suricata -c /etc/suricata/suricata.yaml -r ../bigdnssample.pcap
+
+<span class=o>[</span>775501<span class=o>]</span> 9/8/2020 -- 20:09:21 - <span class=o>(</span>suricata.c:1064<span class=o>)</span> &lt;Notice&gt; <span class=o>(</span>LogVersion<span class=o>)</span> -- This is Suricata version 6.0.0-dev <span class=o>(</span>db75675f4 2020-07-09<span class=o>)</span> running in USER mode
+<span class=o>[</span>775501<span class=o>]</span> 9/8/2020 -- 20:09:21 - <span class=o>(</span>output-json-stats.c:465<span class=o>)</span> &lt;Error&gt; <span class=o>(</span>OutputStatsLogInitSub<span class=o>)</span> -- <span class=o>[</span>ERRCODE: SC_ERR_STATS_LOG_GENERIC<span class=o>(</span>278<span class=o>)]</span> - eve.stats: stats are disabled globally: <span class=nb>set</span> stats.enabled to true. See https://suricata.readthedocs.io/en/latest/configuration/suricata-yaml.html#stats
+<span class=o>[</span>775501<span class=o>]</span> 9/8/2020 -- 20:09:21 - <span class=o>(</span>tm-threads.c:1887<span class=o>)</span> &lt;Notice&gt; <span class=o>(</span>TmThreadWaitOnThreadInit<span class=o>)</span> -- all <span class=m>9</span> packet processing threads, <span class=m>2</span> management threads initialized, engine started.
+
+<span class=o>[</span>775501<span class=o>]</span> 9/8/2020 -- 21:16:52 - <span class=o>(</span>suricata.c:2617<span class=o>)</span> &lt;Notice&gt; <span class=o>(</span>SuricataMainLoop<span class=o>)</span> -- Signal Received.  Stopping engine.
+<span class=o>[</span>775503<span class=o>]</span> 9/8/2020 -- 21:17:11 - <span class=o>(</span>source-pcap-file.c:371<span class=o>)</span> &lt;Notice&gt; <span class=o>(</span>ReceivePcapFileThreadExitStats<span class=o>)</span> -- Pcap-file module <span class=nb>read</span> <span class=m>1</span> files, <span class=m>222780376</span> packets, <span class=m>28054893332</span> bytes
+
+ Performance counter stats <span class=k>for</span> <span class=s1>&#39;sudo suricata -c /etc/suricata/suricata.yaml -r ../bigdnssample.pcap&#39;</span>:
+
+    4079.763122836 seconds <span class=nb>time</span> elapsed
+
+   30275.549690000 seconds user
+     508.539254000 seconds sys
+
+
+</code></pre></td></tr></table>
+</div>
+</div><p>The CPU almost immediately jumps to 100% and 22% of my RAM is occupied by the Suricata process, and it finishes in ~4000 seconds. Given the fact that my CPU was fully utilized, I assume if I tweak the config of Suricata and/or throw better hardware at it, it&rsquo;ll be scalable enough to handle these numbers fairly easily.</p>
+<h2 id=snort>Snort</h2>
+<p>I used <code>vimagick</code>&rsquo;s snort docker image and created a rule just like the Suricata one to alert on the <code>prppsn</code> string. The result was surprisingly good!</p>
+<p>Version:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-fallback data-lang=fallback>   ,,_     -*&gt; Snort! &lt;*-
+  o&#34;  )~   Version 2.9.16 GRE (Build 118) 
+   &#39;&#39;&#39;&#39;    By Martin Roesch &amp; The Snort Team: http://www.snort.org/contact#team
+           Copyright (C) 2014-2020 Cisco and/or its affiliates. All rights reserved.
+           Copyright (C) 1998-2013 Sourcefire, Inc., et al.
+           Using libpcap version 1.5.3
+           Using PCRE version: 8.32 2012-11-30
+           Using ZLIB version: 1.2.7
+</code></pre></td></tr></table>
+</div>
+</div><div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>Performance counter stats <span class=k>for</span> <span class=s1>&#39;sudo docker run --rm vimagick/snort -c /etc/snort/snort.conf -r /input.pcap -A full&#39;</span>:
+
+     380.446791709 seconds <span class=nb>time</span> elapsed
+
+       0.063899000 seconds user
+       0.034766000 seconds sys
+</code></pre></td></tr></table>
+</div>
+</div><p>380 Seconds! Incredibly fast. Although to be fair, Snort doesn&rsquo;t log the actual packets in a good format. However, It does create a <code>snort.log</code> with the content of the packets so it can later on be used to re-create those packets or parse them using <code>idstools</code> package. Also, Snort just used 1 CPU core and almost ~5% RAM. Impressive!</p>
+<h2 id=dnsmonster-and-clickhouse>DNSMonster and ClickHouse</h2>
+<p>Now let&rsquo;s talk about indexing and making DNS data searchable. I&rsquo;ve talked about <code>dnsmonster</code> in detail in <a href=///2020/02/2020-02-05-dnsmonster/ rel>another blogpost</a>. Let&rsquo;s quickly push this data to <code>dnsmonster</code> and into my local Clickhouse instance and see how long it&rsquo;ll take to index the whole file and make it searchable:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sh data-lang=sh>$ dnsmonster -serverName<span class=o>=</span>pcaptest -pcapFile bigdnssample.pcap -clickhouseAddress<span class=o>=</span>127.0.0.1:9000 -batchSize<span class=o>=</span><span class=m>1000000</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>The operation took ~15 minutes, giving the 20 minute <code>pcap</code> a run for its money. And now everything becomes much much more interesting! Let&rsquo;s fire up our Clckhouse client and issue a couple of queries to see how long it&rsquo;ll take to get some results:</p>
+<div class=highlight><div class=chroma>
+<table class=lntable><tr><td class=lntd>
+<pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td>
+<td class=lntd>
+<pre tabindex=0 class=chroma><code class=language-sql data-lang=sql><span class=k>SELECT</span><span class=w> </span><span class=k>COUNT</span><span class=p>(</span><span class=o>*</span><span class=p>)</span><span class=w>
+</span><span class=w></span><span class=k>FROM</span><span class=w> </span><span class=n>DNS_LOG</span><span class=w>
+</span><span class=w></span><span class=k>WHERE</span><span class=w> </span><span class=n>Question</span><span class=w> </span><span class=k>LIKE</span><span class=w> </span><span class=s1>&#39;%prppsn.com%&#39;</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=err>┌─</span><span class=k>COUNT</span><span class=p>()</span><span class=err>──┐</span><span class=w>
+</span><span class=w></span><span class=err>│</span><span class=w>     </span><span class=mi>136</span><span class=w>  </span><span class=err>│</span><span class=w>
+</span><span class=w></span><span class=err>└──────────┘</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=mi>1</span><span class=w> </span><span class=k>rows</span><span class=w> </span><span class=k>in</span><span class=w> </span><span class=k>set</span><span class=p>.</span><span class=w> </span><span class=n>Elapsed</span><span class=p>:</span><span class=w> </span><span class=mi>1</span><span class=p>.</span><span class=mi>437</span><span class=w> </span><span class=n>sec</span><span class=p>.</span><span class=w> </span><span class=n>Processed</span><span class=w> </span><span class=mi>222</span><span class=p>.</span><span class=mi>42</span><span class=w> </span><span class=n>million</span><span class=w> </span><span class=k>rows</span><span class=p>,</span><span class=w> </span><span class=mi>7</span><span class=p>.</span><span class=mi>23</span><span class=w> </span><span class=n>GB</span><span class=w> </span><span class=p>(</span><span class=mi>154</span><span class=p>.</span><span class=mi>79</span><span class=w> </span><span class=n>million</span><span class=w> </span><span class=k>rows</span><span class=o>/</span><span class=n>s</span><span class=p>.,</span><span class=w> </span><span class=mi>5</span><span class=p>.</span><span class=mi>03</span><span class=w> </span><span class=n>GB</span><span class=o>/</span><span class=n>s</span><span class=p>.)</span><span class=w> 
+</span><span class=w>
+</span><span class=w></span><span class=k>SELECT</span><span class=w> </span><span class=o>*</span><span class=w>
+</span><span class=w></span><span class=k>FROM</span><span class=w> </span><span class=n>DNS_LOG</span><span class=w>
+</span><span class=w></span><span class=k>WHERE</span><span class=w> </span><span class=n>Question</span><span class=w> </span><span class=k>LIKE</span><span class=w> </span><span class=s1>&#39;%prppsn%&#39;</span><span class=w>
+</span><span class=w></span><span class=n>FORMAT</span><span class=w> </span><span class=n>CSV</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=s2>&#34;2020-08-08&#34;</span><span class=p>,</span><span class=s2>&#34;2020-08-08 00:20:31&#34;</span><span class=p>,</span><span class=s2>&#34;pcaptest&#34;</span><span class=p>,</span><span class=mi>4</span><span class=p>,</span><span class=mi>0000001111</span><span class=p>,</span><span class=s2>&#34;udp&#34;</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=s2>&#34;p5.prppsn.com.&#34;</span><span class=p>,</span><span class=mi>31</span><span class=w>
+</span><span class=w></span><span class=s2>&#34;2020-08-08&#34;</span><span class=p>,</span><span class=s2>&#34;2020-08-08 00:20:31&#34;</span><span class=p>,</span><span class=s2>&#34;pcaptest&#34;</span><span class=p>,</span><span class=mi>4</span><span class=p>,</span><span class=mi>0000002222</span><span class=p>,</span><span class=s2>&#34;udp&#34;</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=s2>&#34;p5.prppsn.com.&#34;</span><span class=p>,</span><span class=mi>42</span><span class=w>
+</span><span class=w></span><span class=s2>&#34;2020-08-08&#34;</span><span class=p>,</span><span class=s2>&#34;2020-08-08 00:20:31&#34;</span><span class=p>,</span><span class=s2>&#34;pcaptest&#34;</span><span class=p>,</span><span class=mi>4</span><span class=p>,</span><span class=mi>0000003333</span><span class=p>,</span><span class=s2>&#34;udp&#34;</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>1</span><span class=p>,</span><span class=mi>0</span><span class=p>,</span><span class=s2>&#34;p5.prppsn.com.&#34;</span><span class=p>,</span><span class=mi>910</span><span class=w>
+</span><span class=w></span><span class=p>...</span><span class=w>
+</span><span class=w>
+</span><span class=w></span><span class=mi>136</span><span class=w> </span><span class=k>rows</span><span class=w> </span><span class=k>in</span><span class=w> </span><span class=k>set</span><span class=p>.</span><span class=w> </span><span class=n>Elapsed</span><span class=p>:</span><span class=w> </span><span class=mi>1</span><span class=p>.</span><span class=mi>327</span><span class=w> </span><span class=n>sec</span><span class=p>.</span><span class=w> </span><span class=n>Processed</span><span class=w> </span><span class=mi>222</span><span class=p>.</span><span class=mi>42</span><span class=w> </span><span class=n>million</span><span class=w> </span><span class=k>rows</span><span class=p>,</span><span class=w> </span><span class=mi>7</span><span class=p>.</span><span class=mi>23</span><span class=w> </span><span class=n>GB</span><span class=w> </span><span class=p>(</span><span class=mi>167</span><span class=p>.</span><span class=mi>65</span><span class=w> </span><span class=n>million</span><span class=w> </span><span class=k>rows</span><span class=o>/</span><span class=n>s</span><span class=p>.,</span><span class=w> </span><span class=mi>5</span><span class=p>.</span><span class=mi>45</span><span class=w> </span><span class=n>GB</span><span class=o>/</span><span class=n>s</span><span class=p>.)</span><span class=w> 
+</span><span class=w>
+</span><span class=w>
+</span><span class=w>
+</span></code></pre></td></tr></table>
+</div>
+</div><p>under two seconds and all results returned!</p>
+<div class=echarts id=id-1 style=width:100%;height:30rem></div>
+<h2 id=conclusion>Conclusion</h2>
+<p>Depending on your use case, Wireshark might not be the best idea to deal with large <code>pcap</code> files. It&rsquo;s merely designed to represent the traffic flow in a nice manner with one of the most comprehensive packet parsers there is. My recommandetion is to use Wireshark and its family in you lab env and with a small <code>pcap</code> to come up with what you want to solve, and then leverage something like <code>dnsmonster</code> or on a larger scale, <code>moloch</code> to index and search across a giant network dump.</p>
+<p>The next step for me is to try and connect <code>dnsmonster</code> with something like <code>scikit</code> to auto-detect anomalies in a massive pcap file with Clickhouse as a search and index middleware. That way, the &ldquo;intersting&rdquo; packets will pop up automatically so you don&rsquo;t have to deal with milliions of ordinary packets. But that&rsquo;s a different experiment for another day :)</p>
+</div><div class=post-footer id=post-footer>
+<div class=post-info>
+<div class=post-info-line>
+<div class=post-info-mod>
+<span>Updated on 2020-08-09</span>
+</div>
+<div class=post-info-license></div>
+</div>
+<div class=post-info-line>
+<div class=post-info-md></div>
+<div class=post-info-share>
+<span></span>
+</div>
+</div>
+</div>
+<div class=post-info-more>
+<section class=post-tags><i class="fas fa-tags fa-fw"></i>&nbsp;<a href=/tags/linux/>linux</a>,&nbsp;<a href=/tags/network/>Network</a>,&nbsp;<a href=/tags/ids/>IDS</a></section>
+<section>
+<span><a href=javascript:void(0); onclick=window.history.back()>Back</a></span>&nbsp;|&nbsp;<span><a href=/>Home</a></span>
+</section>
+</div>
+<div class=post-nav><a href=/2020/02/2020-02-05-dnsmonster/ class=prev rel=prev title="Monitoring 200K DNS Queries per second using ClickHouse"><i class="fas fa-angle-left fa-fw"></i>Monitoring 200K DNS Queries per second using ClickHouse</a>
+<a href=/2020/09/2020-09-28-sshmfahook/ class=next rel=next title="SSH MFA using Slack/Teams/Discord">SSH MFA using Slack/Teams/Discord<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+<div id=comments><div id=disqus_thread class=comment></div><noscript>
+Please enable JavaScript to view the comments powered by <a href=https://disqus.com/?ref_noscript>Disqus</a>.
+</noscript></div></article></div>
+</main><footer class=footer>
+<div class=footer-container><div class=footer-line>Powered by <a href=https://gohugo.io/ target=_blank rel="noopener noreffer" title="Hugo 0.87.0">Hugo</a> | Theme - <a href=https://github.com/dillonzq/LoveIt target=_blank rel="noopener noreffer" title="LoveIt 0.2.10"><i class="far fa-kiss-wink-heart fa-fw"></i> LoveIt</a>
+</div><div class=footer-line><i class="far fa-copyright fa-fw"></i><span itemprop=copyrightYear>2021</span><span class=author itemprop=copyrightHolder>&nbsp;<a href=/ target=_blank>Ali Mosajjal</a></span></div>
+</div>
+</footer></div>
+<div id=fixed-buttons><a href=# id=back-to-top class=fixed-button title="Back to Top">
+<i class="fas fa-arrow-up fa-fw"></i>
+</a><a href=# id=view-comments class=fixed-button title="View Comments">
+<i class="fas fa-comment fa-fw"></i>
+</a>
+</div><script type=text/javascript src=https://n0p-me.disqus.com/embed.js defer></script><script type=text/javascript src=/lib/smooth-scroll/smooth-scroll.min.js></script><script type=text/javascript src=/lib/autocomplete/autocomplete.min.js></script><script type=text/javascript src=/lib/lunr/lunr.min.js></script><script type=text/javascript src=/lib/lazysizes/lazysizes.min.js></script><script type=text/javascript src=/lib/clipboard/clipboard.min.js></script><script type=text/javascript src=/lib/echarts/echarts.min.js></script><script type=text/javascript src=/lib/echarts/macarons.min.js></script><script type=text/javascript>window.config={code:{copyTitle:"Copy to clipboard",maxShownLines:10},comment:{},data:{"id-1":'{"legend":{"data":["蒸发量","降水量","平均温度"]},"series":[{"data":[6000,6200,5317,4079,380,835],"name":"Seconds to Index","type":"bar"},{"data":[12.5,40,35,99,12.5,30],"name":"CPU Usage (%)","type":"line","yAxisIndex":1}],"toolbox":{"feature":{"saveAsImage":{"title":"Save as Image"}}},"tooltip":{"axisPointer":{"crossStyle":{"color":"#999"},"type":"cross"},"trigger":"axis"},"xAxis":[{"axisPointer":{"type":"shadow"},"data":["PassiveDNS","Packetbeat","GoPassiveDNS","Suricata","Snort","DNSMonster"],"type":"category"}],"yAxis":[{"axisLabel":{"formatter":"{value}"},"interval":1000,"max":10000,"min":0,"name":"Completion Time","type":"value"},{"axisLabel":{"formatter":"{value} %"},"interval":10,"max":100,"min":0,"name":"CPU Usage","type":"value"}]}'},search:{highlightTag:"em",maxResultLength:10,noResultsFound:"No results found",snippetLength:30}}</script><script type=text/javascript src=/js/theme.min.js></script><script type=text/javascript>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date),gtag('config','UA-114664513-1',{anonymize_ip:!0})</script><script type=text/javascript src="https://www.googletagmanager.com/gtag/js?id=UA-114664513-1" async></script></body>
+</html>
