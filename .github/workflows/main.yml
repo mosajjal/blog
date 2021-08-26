@@ -29,5 +29,8 @@ jobs:
         uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/heads/main'
         with:
+          external_repository: mosajjal/mosajjal.github.io
+          publish_branch: main  # default: gh-pages
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./public
+          force_orphan: true
