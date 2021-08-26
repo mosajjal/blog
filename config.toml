@@ -282,10 +282,10 @@ staticDir = ["static", "../assets/others"]               # static directories
   [params.analytics]
     enable = true
     # Google Analytics
-    # [params.analytics.google]
-      # id = "UA-114664513-1"
-      # whether to anonymize IP
-      # anonymizeIP = true
+    [params.analytics.google]
+      id = "UA-114664513-1"
+      whether to anonymize IP
+      anonymizeIP = true
 
     # Cloudflare Analytics
     [params.analytics.cf]
