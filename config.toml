@@ -287,12 +287,6 @@ staticDir = ["static", "../assets/others"]               # static directories
       whether to anonymize IP
       anonymizeIP = true
 
-    # Cloudflare Analytics
-    [params.analytics.cf]
-      token = "251e98b1104f4db08b06ddd68256ec2f"
-      server = "static.cloudflareinsights.com"
-
-
   [privacy.youtube]
     privacyEnhanced = true
 
