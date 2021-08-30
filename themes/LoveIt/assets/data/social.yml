@@ -504,7 +504,7 @@ email:
 # 100: GPG
 gnupg:
   Weight: 100
-  Prefix: /
+  Prefix: 
   Title: Public PGP Key
   Icon:
     Class: fab fa-keycdn fa-fw
