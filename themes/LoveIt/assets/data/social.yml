@@ -504,7 +504,7 @@ email:
 # 100: GPG
 gnupg:
   Weight: 100
-  Prefix: 
+  Prefix: https://blog.n0p.me
   Title: Public PGP Key
   Icon:
     Class: fab fa-keycdn fa-fw

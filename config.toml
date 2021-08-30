@@ -163,7 +163,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     email = ""
 
   [params.social]                                        # Social Info in home page
-    Gnupg = "//gpg/pub.txt"
+    Gnupg = "/gpg/pub.txt"
     GitHub = "mosajjal"
     Linkedin = "mosajjal"
     Twitter = "_n0p_"
