@@ -32,11 +32,11 @@ but C2 doesn't always a "bad guy" term. In any service that has a minion-master 
 
 The canaries are small Raspberry Pi-like boxes that you plug in and hook to the network, and as long as it has DNS connectivity, it'll try to work with a central server via DNS and grab commands, configure itself and send alerts if anything happens to the box. A very good example of DNS C2 being used for good :)
 
-This prompted me to start thinking about how can I create my own DNS C2 framework, and how do I make it extensible enough that it doesn't rely on a honeypot product to be useful. I wanted to make it both standalone and as a library, and make it robust enough to endure network disruption, bad latency, and wrong message order. That's how `dnspot` was born.
+This prompted me to start thinking about how can I create my own DNS C2 framework, and how do I make it extensible enough that it doesn't rely on a honeypot product to be useful. I wanted to make it both standalone and as a library, and make it robust enough to endure network disruption, bad latency, and wrong message order. That's how [`dnspot`](https://github.com/mosajjal/dnspot) was born.
 
-`dnspot` creates a simple transport layer working on top of DNS, and builds a mandatory symmetric encryption layer based on ECC to encrypt the data in transit. It also uses a custom implementation of `base36` as an encoding method for the generated E2EE packets, just to make sure all DNS servers in the world would be happy with it, since base36's alphabet falls under allowed chars in a DNS record. 
+[[`dnspot`](https://github.com/mosajjal/dnspot)](https://github.com/mosajjal/dnspot) creates a simple transport layer working on top of DNS, and builds a mandatory symmetric encryption layer based on ECC to encrypt the data in transit. It also uses a custom implementation of `base36` as an encoding method for the generated E2EE packets, just to make sure all DNS servers in the world would be happy with it, since base36's alphabet falls under allowed chars in a DNS record. 
 
-`dnspot` uses a standard implementation of NIST's P-256 elliptic curve + SHA-256 to transfer data securely over an A query. The responses from the C2 to each agent are sent via a `CNAME` response with the same algorithm, so a lot of underlying C2 and Cryptography functions are shared between the agent and the server. A custom transport protocol has been implemented to ensure the delivery of payloads in various sizes. Before encryption, each packet looks like this:
+[`dnspot`](https://github.com/mosajjal/dnspot) uses a standard implementation of NIST's P-256 elliptic curve + SHA-256 to transfer data securely over an A query. The responses from the C2 to each agent are sent via a `CNAME` response with the same algorithm, so a lot of underlying C2 and Cryptography functions are shared between the agent and the server. A custom transport protocol has been implemented to ensure the delivery of payloads in various sizes. Before encryption, each packet looks like this:
 
 ```go
 type MessagePacket struct {
@@ -79,18 +79,18 @@ This simple yet effective approach, allows us to basically have an overlay netwo
 
 ## Relationship with honeypots
 
-So far, the framework itself was put under the microscope. But as far as a product goes, this offers little to no value as a deception tool. This is where the next phase of the project will come into play. Ideally, the `dnspot` project will not have a dependency on the UI as it has right now. I'd like to turn `dnspot` into a library with pre-defined APIs so any other program can use it as a method of communication without worrying about configuration. 
+So far, the framework itself was put under the microscope. But as far as a product goes, this offers little to no value as a deception tool. This is where the next phase of the project will come into play. Ideally, the [`dnspot`](https://github.com/mosajjal/dnspot) project will not have a dependency on the UI as it has right now. I'd like to turn [`dnspot`](https://github.com/mosajjal/dnspot) into a library with pre-defined APIs so any other program can use it as a method of communication without worrying about configuration. 
 
-In some environments, it's unfeasible to have network connectivity back to any central location via HTTP/HTTPS or even SSH. The environment is too restricted to allow such a thing. And I would argue that those networks are the perfect place for a deception tool to shine. This is where the marriage between `dnspot` and any other honeypot framework will come to play. If `dnspot` turns into a networking framework in the future, it can be easily used as a great tool to implement honeytraps in
+In some environments, it's unfeasible to have network connectivity back to any central location via HTTP/HTTPS or even SSH. The environment is too restricted to allow such a thing. And I would argue that those networks are the perfect place for a deception tool to shine. This is where the marriage between [`dnspot`](https://github.com/mosajjal/dnspot) and any other honeypot framework will come to play. If [`dnspot`](https://github.com/mosajjal/dnspot) turns into a networking framework in the future, it can be easily used as a great tool to implement honeytraps in
 highly segregated networks. DNS is usually allowed anywhere and even if it's not, DNS to one domain is usually a very small attack surface. 
 
 
 ## Final Thoughts
 
 I did NOT design this to be a bad guy tool. Not supporting Windows platform is a big part of that. also, detection of the A record, as well as the CNAME responses, is easy enough for the defenders. As a defender myself, I learned quite a few things by writing this project and trying it in the wild:
-    - you can use `dnspot` as a quick DNS security benchmark tool to see if you can breach out of your network using DNS
-    - you can use `dnspot` to build secure connectivity between highly sensitive networks and your infra using DNS as a decentralized database and routing system
-    - you can use `dnspot` in conjunction with honeytrap to build good deception tools and elevate your security posture
+    - you can use [`dnspot`](https://github.com/mosajjal/dnspot) as a quick DNS security benchmark tool to see if you can breach out of your network using DNS
+    - you can use [`dnspot`](https://github.com/mosajjal/dnspot) to build secure connectivity between highly sensitive networks and your infra using DNS as a decentralized database and routing system
+    - you can use [`dnspot`](https://github.com/mosajjal/dnspot) in conjunction with honeytrap to build good deception tools and elevate your security posture
     - learning ECC is good :)
     - learning DNS is good :)
 
