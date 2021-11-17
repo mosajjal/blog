@@ -16,7 +16,7 @@ categories:
 - linux
 --- 
 
-# What is C2 and why DNS as a transport method
+## What is C2 and why DNS as a transport method
 
 C2 (Command and Control) is a form of Server-Client relationship, mostly referred to as malicious communication between a trojan, malware or any other malicious program to the "mothership". The C2 server usually has 100s if not thousands of clients connected to it, and each client (compromised device) can act differently and behave in a certain way.
 
@@ -32,7 +32,7 @@ but C2 doesn't always a "bad guy" term. In any service that has a minion-master 
 
 The canaries are small Raspberry Pi-like boxes that you plug in and hook to the network, and as long as it has DNS connectivity, it'll try to work with a central server via DNS and grab commands, configure itself and send alerts if anything happens to the box. A very good example of DNS C2 being used for good :)
 
-# dnspot
+## dnspot
 
 This prompted me to start thinking about how can I create my own DNS C2 framework, and how do I make it extensible enough that it doesn't rely on a honeypot product to be useful. I wanted to make it both standalone and as a library, and make it robust enough to endure network disruption, bad latency, and wrong message order. That's how [`dnspot`](https://github.com/mosajjal/dnspot) was born.
 
@@ -57,7 +57,7 @@ Technically, DNS has a lot of question and response methods, and some of them mi
 
 Since I needed to have the same structure from the server-side, I opted to send the responses back as CNAME records, which are basically the same as A records but can be inside the response packet.
 
-# How does it work
+## How does it work
 
 The connection always starts with a "health check" packet initiating from the agent to the server, with an A query with some details around the time of day, and the request will be signed by the private key of the agent, which automatically authenticates any incoming packet. This feature is loosely inspired by Wireguard. leaving the minimum footprint on the packet payload, and focus on authentication and authorization with ECC
 
@@ -79,7 +79,7 @@ since there's the ability to have big arguments and/or responses in the code, th
 
 This simple yet effective approach, allows us to basically have an overlay network on top of DNS, relying only on PKI for the identification of each agent. IP address, MAC address, etc do not matter to this method.
 
-# Relationship with honeypots
+## Relationship with honeypots
 
 So far, the framework itself was put under the microscope. But as far as a product goes, this offers little to no value as a deception tool. This is where the next phase of the project will come into play. Ideally, the [`dnspot`](https://github.com/mosajjal/dnspot) project will not have a dependency on the UI as it has right now. I'd like to turn [`dnspot`](https://github.com/mosajjal/dnspot) into a library with pre-defined APIs so any other program can use it as a method of communication without worrying about configuration. 
 
@@ -87,7 +87,7 @@ In some environments, it's unfeasible to have network connectivity back to any c
 highly segregated networks. DNS is usually allowed anywhere and even if it's not, DNS to one domain is usually a very small attack surface. 
 
 
-# Final Thoughts
+## Final Thoughts
 
 I did NOT design this to be a bad guy tool. Not supporting Windows platform is a big part of that. also, detection of the A record, as well as the CNAME responses, is easy enough for the defenders. As a defender myself, I learned quite a few things by writing this project and trying it in the wild:
     - you can use [`dnspot`](https://github.com/mosajjal/dnspot) as a quick DNS security benchmark tool to see if you can breach out of your network using DNS
