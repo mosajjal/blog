@@ -18,15 +18,15 @@ categories:
 
 ## What is C2 and why DNS as a transport method
 
-C2 (Command and Control) is a form of Server-Client relationship, mostly referred to as malicious communication between a trojan, malware or any other malicious program to the "mothership". The C2 server usually has 100s if not thousands of clients connected to it, and each client (compromised device) can act differently and behave in a certain way.
+C2 (Command and Control) is a Server-Client communication method, mostly referred to as malicious communication between a trojan, malware or any other malicious program to the "mothership". The C2 server usually has 100s if not thousands of clients connected to it, and each client (compromised device) can act differently and behave in a certain way.
 
-C2 is a very generic term. The malware samples I've come across have used various methods to establish the connection to the command and control servers. Some of the interesting ones include:
-    - reading metadata inside a Tweet picture to get the next action
-    - read comments on Britney's photo on Instagram and decrypt the message
-    - login to Gmail/Outlook and read the inbox
+C2 is a generic term. The malware samples I've come across have used various methods to establish the connection to the command and control servers. Some of the interesting ones include:
+    - Reading metadata inside a Tweet picture to get the next action
+    - Analyse comments on Britney's photo on Instagram and decrypt the message
+    - Login to Gmail/Outlook and use the email's builtin features 
     - Pure HTTP connection to an IP/hostname
 
-some of the more "advanced" threat actors use DNS as a stealth method of getting commands and running them on the victim's box. due to DNS protocol limitations, the data exfiltration and lateral movements usually don't happen in this layer. Sometimes that comes as a simple upload to dropbox or an S3 bucket rather than purely using DNS to move around tons of data.
+some of the more "advanced" threat actors use DNS as a stealthy method of getting commands and running them on the victim's box. due to DNS protocol limitations, the data exfiltration and lateral movements usually don't happen in this layer. Sometimes that comes as a simple upload to dropbox or an S3 bucket rather than purely using DNS to move around tons of data.
 
 but C2 doesn't always a "bad guy" term. In any service that has a minion-master relationship, the master could be considered a C2 server. A good example of that is some deception tools such as the Canaries, which have always been interesting to me. 
 
