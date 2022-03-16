@@ -311,13 +311,3 @@ staticDir = ["static", "../assets/others"]               # static directories
   [markup.highlight]
     # false is a necessary configuration (https://github.com/dillonzq/LoveIt/issues/158)
     noClasses = false
-
-
-[server]
-[[server.headers]]
-  for = '/'
-  [server.headers.values]
-    Referrer-Policy = 'strict-origin-when-cross-origin'
-    X-Content-Type-Options = 'nosniff'
-    X-Frame-Options = 'DENY'
-    X-XSS-Protection = '1; mode=block'
