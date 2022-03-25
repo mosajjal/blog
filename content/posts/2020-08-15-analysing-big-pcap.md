@@ -292,7 +292,7 @@ Performance counter stats for 'sudo docker run --rm vimagick/snort -c /etc/snort
 
 ## DNSMonster and ClickHouse
 
-Now let's talk about indexing and making DNS data searchable. I've talked about `dnsmonster` in detail in [another blogpost](///2020/02/2020-02-05-dnsmonster/). Let's quickly push this data to `dnsmonster` and into my local Clickhouse instance and see how long it'll take to index the whole file and make it searchable:
+Now let's talk about indexing and making DNS data searchable. I've talked about `dnsmonster` in detail in [another blogpost](//2020/02/2020-02-05-dnsmonster/). Let's quickly push this data to `dnsmonster` and into my local Clickhouse instance and see how long it'll take to index the whole file and make it searchable:
 
 ```sh
 $ dnsmonster -serverName=pcaptest -pcapFile bigdnssample.pcap -clickhouseAddress=127.0.0.1:9000 -batchSize=1000000
