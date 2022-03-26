@@ -23,7 +23,7 @@ CaddyWiper was first [reported](https://www.welivesecurity.com/2022/03/15/caddyw
 
 > Dubbed CaddyWiper by ESET analysts, the malware was first detected at 11.38 a.m. local time (9.38 a.m. UTC) on Monday. The wiper, which destroys user data and partition information from attached drives, was spotted on several dozen systems in a limited number of organizations. It is detected by ESET products as Win32/KillDisk.NCX.
 
-One of my friends pinged me a few days later with [a link](https://bazaar.abuse.ch/download/a294620543334a721a2ae8eaaf9680a0786f4b9a216d75b55cfd28f39e9430ea/) to a CaddyWiper sample. Since this sample was a particularly small one, I decided to write a blogpost going through each function from scratch and introduce the tools I used to make my life easier. Hopefully this can serve as a reference to junior malware analysts who want to get started with this craft. 
+One of my friends pinged me a few days later with [a link](https://bazaar.abuse.ch/download/a294620543334a721a2ae8eaaf9680a0786f4b9a216d75b55cfd28f39e9430ea/) to a CaddyWiper sample. Since this sample was a particularly small one, I decided to write a blog post going through each function from scratch and introducing the tools I used to make my life easier. Hopefully, this can serve as a reference to junior malware analysts who want to get started with this craft. 
 
 First off, I'm a Linux user myself and I use mainly Linux tools to analyse malware. `pev` is a set command-line utilities providing a high level analysis of a `PE` binary. It consists of the following tools
 
@@ -181,9 +181,9 @@ In the main function, we can see a call to the external function [`DsRoleGetPrim
 
 ![ghidra-1](/img/caddywiper/DsRoleGetPrimaryDomainInformation-ghidra-1.png)
 
-according to Microsoft documentation The DsRoleGetPrimaryDomainInformation function retrieves state data for the computer. This data includes the state of the directory service installation and domain data.
+according to Microsoft documentation, The `DsRoleGetPrimaryDomainInformation` function retrieves state data for the computer. This data includes the state of the directory service installation and domain data.
 
-If we take a closer look at the function call, we can see that the function has been called with 3 parameters: `DsRoleGetPrimaryDomainInformation(0,1,&empty_int_pointer);`. the 0 refers to the `lpServer` parameter, meaning the function will be called on the local computer (refer to the link above for more info on that). The `1` is the `InfoLevel` parameter, which specifies the level of output needed, as well as the type of output being pushed to our `empty_int_pointer`. refering to [Microsoft Documentation](https://docs.microsoft.com/en-us/windows/win32/api/dsrole/ne-dsrole-dsrole_primary_domain_info_level), we can see `1` refers to the first item in the C++ enum, which is `DsRolePrimaryDomainInfoBasic` :
+If we take a closer look at the function call, we can see that the function has been called with 3 parameters: `DsRoleGetPrimaryDomainInformation(0,1,&empty_int_pointer);`. the 0 refers to the `lpServer` parameter, meaning the function will be called on the local computer (refer to the link above for more info on that). The `1` is the `InfoLevel` parameter, which specifies the level of output needed, as well as the type of output being pushed to our `empty_int_pointer`. referiring to [Microsoft Documentation](https://docs.microsoft.com/en-us/windows/win32/api/dsrole/ne-dsrole-dsrole_primary_domain_info_level), we can see `1` refers to the first item in the C++ enum, which is `DsRolePrimaryDomainInfoBasic` :
 
 ```cpp
 typedef enum _DSROLE_PRIMARY_DOMAIN_INFO_LEVEL {
@@ -230,7 +230,7 @@ let's go take a look at the `wiper` function. That's where the attacker's malici
 
 ## The wiper function
 
-The function itself is a `void` one. Meaning the attacker didn't really care if the wiping is successful or not. Reading a bit of the function itself, the first bit if interesting information is seen on line ~180. There seems to be another function, that gets called with both `*` and `\\` values. 
+The function itself is a `void` one. Meaning the attacker didn't really care if the wiping is successful or not. Reading a bit of the function itself, the first bit of interesting information is seen at line ~180. There seems to be another function, that gets called with both `*` and `\\` values. 
 
 ![ghidra-wiper-1](/img/caddywiper/wiper-ghidra-1.png)
 
@@ -269,11 +269,11 @@ The function appears to concat two strings together with a couple of `while` loo
 
 ### subfunction `FUN_00401530`
 
-After concating the paths with `*` and `\\`, `FUN_00401530` gets called with two parameters: `findFirstFileA` and `kernel32.dll`, as specified in lines directly after calling the two concat functions (line 190 to 200 inside the `wipe` function in Ghidra).
+After concatenating the paths with `*` and `\\`, `FUN_00401530` gets called with two parameters: `findFirstFileA` and `kernel32.dll`, as specified in lines directly after calling the two concat functions (line 190 to 200 inside the `wipe` function in Ghidra).
 
 ![wiper-subfunction-2](/img/caddywiper/wiper-subfunction-2.png)
 
-Even though the logic of the function seems complicated, from what it gets and produces as an output, it's safe to assume the function is a Win32 API client. The DLL filename as well as the specific functionality is pushed to the function and the result is an integer which corresponds to the API response code. From now on, I'll refer to `FUN_00401530` as `syscall_wrapper`
+Even though the logic of the function seems complicated, from what it gets and produces as an output, it's safe to assume the function is a Win32 API client. The DLL filename as well as the specific functionality is pushed to the function and the result is an integer that corresponds to the API response code. From now on, I'll refer to `FUN_00401530` as `syscall_wrapper`
 
 ## Other Interesting Functions
 
@@ -293,7 +293,7 @@ LocalFree
 CloseHandle
 ```
 
-This function looks to be looking into each particular file's ownership, and tries to get around some ACLs and "access denied" errors that it comes across. I would describe it as a basic way to try to make a file writable enough so it can destroy it. Although I didn't read each individual syslog to back that claim. `FUN_00401750` is the main carrier of this operation. In `FUN_00401750`, we can see the following functions:
+This function looks to be looking into each particular file's ownership and tries to get around some ACLs and "access denied" errors that it comes across. I would describe it as a basic way to try to make a file writable enough so it can destroy it. Although I didn't read each individual syscall to back that claim. `FUN_00401750` is the main carrier of this operation. In `FUN_00401750`, we can see the following functions:
 
 ```
 LookupPrivilegeValueA
@@ -336,7 +336,7 @@ This is because the attacker is making use of `stack strings`. [This link](https
 
 ## Detection 
 
-Obviously, the easiest detection for this particular sample could be hashes. But since this malware is small, hashes, even `ssdeep` are not a very good idea. Let's try to build a YARA rule that defines what we learned from the malware. 
+The easiest detection for this particular sample could be a hash value. But since this malware is small, hashes, even `ssdeep` are not a very good idea. Let's try to build a YARA rule that defines what we learned from the malware. 
 
 ```c
 rule caddywiper {
