@@ -10,14 +10,14 @@ tags:
 - yara
 images:
 - /img/caddywiper/wiper-ghidra-2.png
-description: 'This post goes through a small yet powerful wiper sample designed to wipe the target system'
+description: 'Reverse Engineering of a Caddy Wiper Sample targeting Ukraine'
 categories:
 - Windows
 - Malware 
 - Security
 ---
 
-# Analysis of a Caddy Wiper Sample targeting Ukraine
+# Analysis of a Caddy Wiper Sample
 
 ## Introduction
 
