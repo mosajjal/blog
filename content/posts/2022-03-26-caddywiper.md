@@ -2,14 +2,15 @@
 layout: post
 title:  Analysis of a Caddy Wiper Sample Targeting Ukraine
 comments: true
-aliases: [ e]
-image: /img/caddywiper/wiper-ghidra-2.png
+aliases: [/caddy-wiper]
 date:   2022-03-26 00:00:00
 tags:
 - malware
 - windows
 - yara
-description: ''
+images:
+- /img/caddywiper/wiper-ghidra-2.png
+description: 'This post goes through a small yet powerful wiper sample designed to wipe the target system'
 categories:
 - Windows
 - Malware 
