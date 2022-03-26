@@ -15,7 +15,8 @@ categories:
 - Malware 
 - Security
 ---
-# Analysis of a Caddy Wiper Sample targeting Ukrainian organizations
+
+# Analysis of a Caddy Wiper Sample targeting Ukraine
 
 ## Introduction
 
