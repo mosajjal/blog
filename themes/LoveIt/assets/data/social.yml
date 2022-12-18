@@ -441,8 +441,9 @@ researchgate:
 # 056: Mastodon
 mastodon:
   Weight: 56
-  Prefix: https://fosstodon.org/
-  Title: Fosstodon
+  Prefix: https://infosec.exchange/
+  Rel: me
+  Title: Infosec Exchange
   Icon:
     Class: fab fa-mastodon fa-fw
 
