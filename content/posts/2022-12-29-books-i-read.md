@@ -13,7 +13,16 @@ categories:
 - misc
 ---
 
-# intro
+{{< rawhtml >}}
+    <br>
+    <audio controls>
+    <source src="/img/books-2022/audio.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+    </audio>
+    <br>
+{{< /rawhtml >}}
+
+# Introduction
 
 2022 was an interesting year for me. Compared to 2021 and 2020, it was one of the quieter years of my infosec career, even though the noise and hype around every single vulnerability, "breach", and leak were immense. I decided to focus less on the news, and spend a bit of my 2022 grasping the fundamentals. I also chose a book as the preferred medium since I find it easier to sit down and read than to open a browser tab and get lost in my lack of concentration. I went through at least 20 publications over the past 12 months; some were long blog posts, some were documentation and RFCs and some were published books. In this blog post, I'll try to rate/rank the top ones I read and give a paragraph on the pros/cons.
 
@@ -27,7 +36,7 @@ This [blog post](https://nav.al/rich) is a collection of tweets, talks, and quot
 
 ## 8, Malware Data Science (ISBN: 1593278594)
 
-Malware Data Science was a great read for me. I've always held the feeling that infosec peeps are going to become specialized data scientists one way or another, and this book was the right read for me to shape that view around analyzing malware. I started a few pet projects and initiatives based on this book as pet projects. I also saw through the business model of a few cybersecurity companies that use basic ML techniques spelled out in this book.
+Malware Data Science was a great read for me. I've always held the feeling that infosec peeps are going to become specialized data scientists one way or another, and this book was the right read for me to shape that view around analyzing malware. I started a few pet projects and initiatives based on this book. I also saw through the business model of a few cybersecurity companies that use basic ML techniques spelled out in this book.
 
 ## 7, Crypto Dictionary (ISBN: 9781718501409)
 
