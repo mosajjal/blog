@@ -280,7 +280,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     recordIP = true
 
   [params.analytics]
-    enable = true
+    enable = false
     # Google Analytics
     [params.analytics.google]
       id = "UA-114664513-1"
