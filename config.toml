@@ -56,7 +56,7 @@ staticDir = ["static", "../assets/others"]               # static directories
 [params]
   title = "n0p Blog"                      # site title  
   description = "n0p Blog"                      # site description
-  images = ["author.jpg"]
+  images = ["/author.jpg"]
   keywords = ["Infosec", "Blue Team", "Linux"]                   # site keywords
 
                                               #### Author Info
@@ -114,7 +114,7 @@ staticDir = ["static", "../assets/others"]               # static directories
       # Gravatar Email for preferred avatar in home page
       gravatarEmail = ""
       # URL of avatar shown in home page
-      avatarURL = "author.jpg"
+      avatarURL = "/author.jpg"
       # LoveIt CHANGED | 0.2.7 title shown in home page (HTML format is supported)
       title = ""
       # subtitle shown in home page
@@ -218,6 +218,7 @@ staticDir = ["static", "../assets/others"]               # static directories
     #Researchgate = "xxxx"
     Mastodon = "@n0p"
     #Thingiverse = "xxxx"
+    RSS = "/index.xml"
 
   [params.share]                                         # Social Share Links in post page
     enable = true
@@ -244,12 +245,12 @@ staticDir = ["static", "../assets/others"]               # static directories
   [params.publisher]                                     # Publisher Info just for SEO
     name = "Ali Mosajjal"
     [params.publisher.logo]
-      url = "author.jpg"
+      url = "/author.jpg"
       width = 127
       height = 40
 
   [params.logo]                                          # Website Log Info just for SEO
-    url = "author.jpg"
+    url = "/author.jpg"
     width = 127
     height = 40
 
