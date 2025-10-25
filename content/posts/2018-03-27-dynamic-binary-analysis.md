@@ -15,17 +15,20 @@ categories:
 - Reverse Engineering 
 ---
 
-![image](https://memegenerator.net/img/instances/58266813/everybodys-out-partying-and-im-sitting-here-reverse-engineering.jpg)
 
-# What, Why, and Where?
+Dynamic Binary Analysis (DBA) is a technique to analyze the behavior of a binary by somehow running it and watch its behavior. Obviously it's the opposite of Static Binary Analysis in which you disassemble a piece of code and draw the graph of the entire program to see what it does.
+
+<!--more-->
 
 ## What is it exactly?
 
-Dynamic Binary Analysis (DBA) is a technique to analyze the behavior of a binary by somehow running it and watch its behavior. Obviously it's the opposite of Static Binary Analysis in which you disassemble a piece of code and draw the graph of the entire program to see what it does. 
+Dynamic Binary Analysis (DBA) is a technique to analyze the behavior of a binary by somehow running it and watch its behavior. Obviously it's the opposite of Static Binary Analysis in which you disassemble a piece of code and draw the graph of the entire program to see what it does.
+
+![image](https://memegenerator.net/img/instances/58266813/everybodys-out-partying-and-im-sitting-here-reverse-engineering.jpg)
 
 ## Why not Static?
 
-well, it's actually better if you have a small binary or a binary written in a friendly programming language. But when your binary gets big enough, or you use C++, Rust or Go as your language of choice, it becomes increasingly difficult to see what the binary is doing. 
+well, it's actually better if you have a small binary or a binary written in a friendly programming language. But when your binary gets big enough, or you use C++, Rust or Go as your language of choice, it becomes increasingly difficult to see what the binary is doing.
 
 # OK let's go through it
 
@@ -64,22 +67,19 @@ pin.bat -pid <program pid> -t pintool.dll [pintool args]
 
 Pin works in a very sophisticated way. The description in the Pin manuals to think of Pin as a JIT (just in time) compiler, where the compiler does not take byte code (as JIT compilation does with Java), but the executable of the process pin is executed against. This means pin inserts itself into the process’ execution. This can be seen when looking at the memory map of such a process:
 
-
 ### pinatrace
 
 One of Pin's biggest tools is its Memory Reference Trace. The pinatrace tool basically generates a file with every single memory access of a process. This allows you to get an understanding what happens within a function. This means you can determine what information or data is accessed in what function
 
-
 # Triton
 
-We've talked enough about DBI and their entire ecosystem. Now let's talk about the tools built with them. I picked my favorite one to talk about 
+We've talked enough about DBI and their entire ecosystem. Now let's talk about the tools built with them. I picked my favorite one to talk about
 
 + Triton (Linux, Windows, Mac)
 
 [Triton](http://triton.quarkslab.com/) is a Dynamic Binary Analysis (DBA) framework. It provides internal components like a Dynamic Symbolic Execution (DSE) engine, a Taint Engine, AST representations of the x86 and the x86-64 instructions set semantics, SMT simplification passes, an SMT Solver Interface and, the last but not least, Python bindings.
 
 ![image](https://camo.githubusercontent.com/d06dfe7f98f26fcddad3d29c7e65eab363d60bd2/687474703a2f2f747269746f6e2e717561726b736c61622e636f6d2f66696c65732f747269746f6e5f7630335f6172636869746563747572652e737667)
-
 
 Based on these components, you are able to build program analysis tools, automate reverse engineering and perform software verification
 

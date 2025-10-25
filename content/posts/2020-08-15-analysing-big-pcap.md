@@ -17,8 +17,9 @@ categories:
 ---
 
 
-# The problem statement
 Say you have a 30GB PCAP full of DNS data, and you want to analyse unusual activity on it. To make things simple, let's see how long it'll take to find a list of IPs that have accessed PSN's domain (`prppsn.com`) and the timestamp associated with them.
+
+<!--more-->
 
 ```sh
 $ perf stat capinfos bigdnssample.pcap
@@ -61,27 +62,30 @@ Number of interfaces in file: 1
       26.655789000 seconds sys
 ```
 
-
 ## What's our hardware
+
 My laptop:
 
-OS: Arch Linux 
+OS: Arch Linux
 Kernel: x86_64 Linux 5.7.7-arch1-1
 Disk: Timing cached reads:   25744 MB in  1.99 seconds = 12915.87 MB/sec, Timing buffered disk reads: 1314 MB in  3.00 seconds = 437.48 MB/sec
 CPU: Intel Core i5-8350U @ 8x 3.6GHz
 RAM: 32GB
 
 ## Wireshark
-This one was easy to dismiss since it didn't even get to 10% of the packets before filling up the RAM and basically died. 
+
+This one was easy to dismiss since it didn't even get to 10% of the packets before filling up the RAM and basically died.
 
 ## Termshark
+
 Terminal brother of Wireshark dies on 6%. But overall a quite nice binary. I'll probably add it to my binary collection since it's basically wireshark in terminal. Almost perfect mouse support as well.
 
 ## Tshark JSON output
+
 From now on, the solutions are going to work in "stream", meaning they probably won't run out of RAM and the question becomes the speed of the solution rather than weather it'll work or not. For the purpose of benchmarking these, I'm gonna use compact JSON format output of `tshark`, and then pipe it to PV to measure lines/second being written to stdout. That way we can have a feeling of how long will it take to actually parse this massive PCAP
 
 ```
-$ command | pv --line-mode --rate > /dev/null
+command | pv --line-mode --rate > /dev/null
 ```
 
 ```
@@ -98,8 +102,8 @@ with Zstandard, with Snappy, with libxml2 2.9.10.
 $ tshark -T jsonraw -r bigdnssample.pcap | sed -e "s/^  },$/ },\r/g" | tr -d '\n' | tr -s '\r' '\n' | pv --line-mode --rate > /dev/null
 ~[3.5k/s]
 ```
-Note that looking at my `gotop`, `sed` and `tr` are not the bottlenecks since `tshark` was filling up a core of CPU and it's a single-core binary
 
+Note that looking at my `gotop`, `sed` and `tr` are not the bottlenecks since `tshark` was filling up a core of CPU and it's a single-core binary
 
 Now let's see how long it'll take for `tshark` to solve our problem
 
@@ -131,7 +135,7 @@ $ packetbeat -c packetbeat.yml -I bigdnssample.pcap |  pv --line-mode --rate > /
 ~[6.5k/s]
 ```
 
-Getting a bit better, almost twice as fast a `tshark`! Although I should mention that this is technically cheating since `tshark` does ALL protocols + a lot of packet info that `packetbeat` misses. 
+Getting a bit better, almost twice as fast a `tshark`! Although I should mention that this is technically cheating since `tshark` does ALL protocols + a lot of packet info that `packetbeat` misses.
 
 So now the logical next step would be to push this to ES and search it, right? wrong! At this stage I'm not very interested in benchmarking ES, only the packet parser. hence I'm gonna rely on `rg` to see how long it'll take to dish out what I need. *Later in this blogpost, I'll compare the search engines*
 
@@ -148,6 +152,7 @@ Gave up after 6200 seconds, 32 results are returned
 ## PassiveDNS
 
 version:
+
 ```sh
 [*] PassiveDNS 1.2.1
 [*] By Edward Bjarte Fjellskål <edward.fjellskaal@gmail.com>
@@ -159,6 +164,7 @@ version:
 $ pdns -r bigdnssample.pcap -j -l /dev/stdout -L /dev/null |  pv --line-mode --rate > /dev/null
 ~[3k/s]
 ```
+
 `passivedns` turned out to be a big disappointment, mainly due to the fact that it's single-core and single threaded. But let's go through the `prppsn.com` search to see what happens anyway
 
 ```json
@@ -171,7 +177,6 @@ Gave up after 6000 seconds, 10 results are returned during this time
 
 ```
 
-
 ## GoPassiveDNS
 
 version:
@@ -182,6 +187,7 @@ since `gopassivedns` doesn't have a versioning system, I'll put the last commit 
 $ gopassivedns -pcap bigdnssample.pcap |  pv --line-mode --rate > /dev/null
 ~[100k/s]
 ```
+
 Ok ok looks promising. Let's do our test against `gopassivedns` and see what happens
 
 ```json
@@ -210,13 +216,11 @@ $ perf stat gopassivedns -pcap bigdnssample.pcap |  rg 'prppsn.com'
 106 results returned.
 ```
 
-
 so, our fastest tool, took 5317 seconds to crunch 1200 seconds worth of DNS data. Nowhere near good enough.
-
 
 ### umpteen minutes later, getting bored
 
-Biggest takeaway from the previous tools: By design, they can't handle traffic thrown at them with this rate. ~20 minutes worth of traffic takes well over ~20 minutes to be parsed by any of these tools and except for `tshark`, none of the tools fully utilized the resources thrown at them, and all 4 maxed out at using 20% of my CPU capacity. 
+Biggest takeaway from the previous tools: By design, they can't handle traffic thrown at them with this rate. ~20 minutes worth of traffic takes well over ~20 minutes to be parsed by any of these tools and except for `tshark`, none of the tools fully utilized the resources thrown at them, and all 4 maxed out at using 20% of my CPU capacity.
 
 Max RAM usage of `packetbeat` was 0.3%, while `gopassivedns` was at 0.2% and `passivedns` was sitting at 3.7% max. For those who are wondering, disk I/O was well under 10% after the initialization of all of these platform. The next logical step would be to turn to solutions that are designed to be equipped to deal with large quantities of data at high rate: IDS/IPS solutions.
 
@@ -259,7 +263,8 @@ $ perf stat sudo  suricata -c /etc/suricata/suricata.yaml -r ../bigdnssample.pca
 
 
 ```
-The CPU almost immediately jumps to 100% and 22% of my RAM is occupied by the Suricata process, and it finishes in ~4000 seconds. Given the fact that my CPU was fully utilized, I assume if I tweak the config of Suricata and/or throw better hardware at it, it'll be scalable enough to handle these numbers fairly easily. 
+
+The CPU almost immediately jumps to 100% and 22% of my RAM is occupied by the Suricata process, and it finishes in ~4000 seconds. Given the fact that my CPU was fully utilized, I assume if I tweak the config of Suricata and/or throw better hardware at it, it'll be scalable enough to handle these numbers fairly easily.
 
 ## Snort
 
@@ -278,7 +283,6 @@ Version:
            Using ZLIB version: 1.2.7
 ```
 
-
 ```sh
 Performance counter stats for 'sudo docker run --rm vimagick/snort -c /etc/snort/snort.conf -r /input.pcap -A full':
 
@@ -295,7 +299,7 @@ Performance counter stats for 'sudo docker run --rm vimagick/snort -c /etc/snort
 Now let's talk about indexing and making DNS data searchable. I've talked about `dnsmonster` in detail in [another blogpost](//2020/02/2020-02-05-dnsmonster/). Let's quickly push this data to `dnsmonster` and into my local Clickhouse instance and see how long it'll take to index the whole file and make it searchable:
 
 ```sh
-$ dnsmonster -serverName=pcaptest -pcapFile bigdnssample.pcap -clickhouseAddress=127.0.0.1:9000 -batchSize=1000000
+dnsmonster -serverName=pcaptest -pcapFile bigdnssample.pcap -clickhouseAddress=127.0.0.1:9000 -batchSize=1000000
 ```
 
 The operation took ~15 minutes, giving the 20 minute `pcap` a run for its money. And now everything becomes much much more interesting! Let's fire up our Clckhouse client and issue a couple of queries to see how long it'll take to get some results:
@@ -382,9 +386,9 @@ under two seconds and all results returned!
 }
 
 {{< /echarts >}}
+
 ## Conclusion
 
-Depending on your use case, Wireshark might not be the best idea to deal with large `pcap` files. It's merely designed to represent the traffic flow in a nice manner with one of the most comprehensive packet parsers there is. My recommandetion is to use Wireshark and its family in you lab env and with a small `pcap` to come up with what you want to solve, and then leverage something like `dnsmonster` or on a larger scale, `moloch` to index and search across a giant network dump. 
+Depending on your use case, Wireshark might not be the best idea to deal with large `pcap` files. It's merely designed to represent the traffic flow in a nice manner with one of the most comprehensive packet parsers there is. My recommandetion is to use Wireshark and its family in you lab env and with a small `pcap` to come up with what you want to solve, and then leverage something like `dnsmonster` or on a larger scale, `moloch` to index and search across a giant network dump.
 
-
-The next step for me is to try and connect `dnsmonster` with something like `scikit` to auto-detect anomalies in a massive pcap file with Clickhouse as a search and index middleware. That way, the "intersting" packets will pop up automatically so you don't have to deal with milliions of ordinary packets. But that's a different experiment for another day :) 
+The next step for me is to try and connect `dnsmonster` with something like `scikit` to auto-detect anomalies in a massive pcap file with Clickhouse as a search and index middleware. That way, the "intersting" packets will pop up automatically so you don't have to deal with milliions of ordinary packets. But that's a different experiment for another day :)

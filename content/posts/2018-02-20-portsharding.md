@@ -14,14 +14,17 @@ categories:
 - Linux 
 ---
 
+If you're a sysadmin or a backend engineer, you probably have heard of the term "port sharding" or "socket sharding" before. It's a technique to allow multiple processes to listen on the same TCP or UDP port at the same time. This is done by enabling a special socket option called `SO_REUSEPORT` on each socket before binding it to an interface.
 
-![image](https://memegenerator.net/img/instances/12831919/does-devnull-support-sharding.jpg)
+<!--more-->
 
 ## It's actually called SO_REUSEPORT
 
-Kernel 3.9 introduced a new cool feature in SOCKET interface called SO_REUSEPORT. So what is it? 
+Kernel 3.9 introduced a new cool feature in SOCKET interface called SO_REUSEPORT. So what is it?
 
-As the [official documentation](http://man7.org/linux/man-pages/man7/socket.7.html) says, it allows multiple AF_INET or AF_INET6 sockets to be bound to an identical socket address. before binding a socket to an interface, each one should have this option enabled. This way, mutiple processes can listen on the same port at the same time! 
+As the [official documentation](http://man7.org/linux/man-pages/man7/socket.7.html) says, it allows multiple AF_INET or AF_INET6 sockets to be bound to an identical socket address. before binding a socket to an interface, each one should have this option enabled. This way, mutiple processes can listen on the same port at the same time!
+
+![image](https://memegenerator.net/img/instances/12831919/does-devnull-support-sharding.jpg)
 
 ## How Can This Possibly Be Secure?
 
@@ -40,26 +43,20 @@ Anyone who has ever configured Nginx, Gunicorn, Sanic, Apache or most of other w
 
 The second approch is not bad except it doesn't work very well with UDP and the first approch is basically chaos. With port sharding, all threads can listen on a port at the same time and get the traffic in a truly balanced manner. This can reduce lock contention between workers accepting new connections, and improve performance on multicore systems.
 
-
 ![image](/img/port-sharding/nginx-before-after.png)
 As depicted in the figure, when the SO_REUSEPORT option is not enabled, a single listening socket notifies workers about incoming connections, and each worker tries to take a connection. With the SO_REUSEPORT option enabled, there are multiple socket listeners for each IP address and port combination, one for each worker process
 
-
 Benchmarking Performance with reuseport from Nginx official website
-
 
 ![image](/img/port-sharding/reuseport-benchmark.png)
 I ran a wrk benchmark with 4 NGINX workers on a 36‑core AWS instance. To eliminate network effects, I ran both client and NGINX on localhost, and also had NGINX return the string OK instead of a file. I compared three NGINX configurations: the default (equivalent to accept_mutex on), with accept_mutex off, and with reuseport. As shown in the figure, reuseport increases requests per second by 2 to 3 times, and reduces both latency and the standard deviation for latency.
 
-
 ### Zero Downtime Updates
 
-Let's move on from Nginx and get into HAProxy. Something designed to be 100% up all the time. 
-
+Let's move on from Nginx and get into HAProxy. Something designed to be 100% up all the time.
 
 ![image](/img/port-sharding/ha-fork.png)
 In this diagram, we see the initial stage of an HAProxy reload starting with a single process (left) and then causing a second process to start (right) which binds to the same IP and port, but with a different socket..
-
 
 This works great so far, until the original process terminates. HAProxy sends a signal to the original process stating that the new process is now accept()ing and handling connections, which causes it to stop accepting new connections and close its own socket before eventually exiting once all connections complete
 
@@ -92,7 +89,6 @@ while True:
     client.close()
 ```
 
-
 simple enough? Let's also see how to enable REUSEPORT in Nginx:
 
 ```c
@@ -114,7 +110,6 @@ stream {
 
 ![image](https://media.giphy.com/media/Hi3pr5mmHrbbi/giphy.gif)
 
-
 ## Sources
 
 + [https://stackoverflow.com/questions/23742368/can-so-reuseport-be-used-on-unix-domain-sockets](https://stackoverflow.com/questions/23742368/can-so-reuseport-be-used-on-unix-domain-sockets)
@@ -124,7 +119,6 @@ stream {
 + [https://www.nginx.com/blog/socket-sharding-nginx-release-1-9-1/](https://www.nginx.com/blog/socket-sharding-nginx-release-1-9-1/)
 + [http://man7.org/linux/man-pages/man7/socket.7.html](http://man7.org/linux/man-pages/man7/socket.7.html)
 + [https://github.com/joewalnes/port-sharding](https://github.com/joewalnes/port-sharding)
-
 
 ## Questions?
 

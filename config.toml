@@ -2,7 +2,7 @@ baseURL = "https://blog.n0p.me/"
 languageCode = "en"                                      # website language
 defaultContentLanguage = "en"                            # [en, zh, ...] determines which i18n file to use
 title = "n0p Blog"                                   # website title
-theme = "LoveIt"                                         # theme
+theme = "github.com/dillonzq/LoveIt"                                        # theme
 enableGitInfo = false                                    # whether to use git commit log to generate lastmod record
 hasCJKLanguage = false                                   # whether to include chinese/japanese/korean
 pagination.pagerSize = 12                                            # default amount of posts in each pages
@@ -18,9 +18,6 @@ pygmentsUseClasses = true
 pygmentsCodefencesGuessSyntax = true
 
 staticDir = ["static", "../assets/others"]               # static directories
-
-[author]                                              #### Author Info
-  name = "Ali Mosajjal"
 
 [sitemap]                                             #### Sitemap Info
   changefreq = "weekly"
@@ -55,18 +52,15 @@ staticDir = ["static", "../assets/others"]               # static directories
     url = "projects"
     weight = 4
 
-  # [[menu.main]]
-  #   identifier = "zh"
-  #   name = '<i class="fas fa-language fa-fw"></i>'
-  #   url = "https://hugo-loveit-zh.netlify.com"
-  #   weight = 5
 
 [params]
-  version = "0.2.X"                                        # LoveIt theme version
+  title = "n0p Blog"                      # site title  
   description = "n0p Blog"                      # site description
   images = ["author.jpg"]
   keywords = ["Infosec", "Blue Team", "Linux"]                   # site keywords
 
+                                              #### Author Info
+  author.name = "Ali Mosajjal"
 
   socialShare = true                                     # whether to show social share links in post page
 
@@ -77,7 +71,7 @@ staticDir = ["static", "../assets/others"]               # static directories
                                                          # license info (HTML format is allowed)
   gitRepo = ""                                           # public git repo url to link lastmod git commit only then enableGitInfo is true
 
-  linkToMarkdown = true                                  # whether to show link to Raw Markdown content of the post
+  linkToMarkdown = false                                  # whether to show link to Raw Markdown content of the post
 
                                                       #### site verification code for Google/Bing/Yandex/Pinterest/Baidu
   google_verification = ""
@@ -85,6 +79,8 @@ staticDir = ["static", "../assets/others"]               # static directories
   yandex_verification = ""
   pinterest_verification = ""
   baidu_verification = ""
+
+
 
   [params.search]
     enable = true
@@ -120,9 +116,9 @@ staticDir = ["static", "../assets/others"]               # static directories
       # URL of avatar shown in home page
       avatarURL = "author.jpg"
       # LoveIt CHANGED | 0.2.7 title shown in home page (HTML format is supported)
-      # title = ""
+      title = ""
       # subtitle shown in home page
-      subtitle = "Rants, Linux Tips, Infosec, Blue Team stuff"  # subtitle shown in home page
+      subtitle = "Infosec, AI, Technology and random shitposts"  # subtitle shown in home page
       # whether to use typeit animation for subtitle
       typeit = true
       # whether to show social links
@@ -286,7 +282,8 @@ staticDir = ["static", "../assets/others"]               # static directories
       id = "UA-114664513-1"
       # whether to anonymize IP
       anonymizeIP = true
-
+[params.header.title]
+name = "n0p Blog"                                   # title in header
   [privacy.youtube]
     privacyEnhanced = true
 

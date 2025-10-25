@@ -1,6 +1,6 @@
 ---
 layout: post
-title:  The Big ASI Lie
+title:  "The Real AI Threat: Why Businesses Are Getting Dumber (and Richer)"
 comments: true
 aliases: [/the-big-asi-lie]
 date:   2025-10-04
@@ -11,12 +11,12 @@ images:
 - /img/asiagi/titlepic.png
 description: ASI and AGI are distractions, the real threat is the boring future where businesses get dumber and make more money.
 categories:
-- misc
----
-
-# The Real AI Threat: Why Businesses Are Getting Dumber (and Richer)
+- AI
+--- 
 
 Everyone is looking at the sky. We're all craning our necks, waiting for the arrival of the big one: Artificial Superintelligence. We read the breathless articles, we watch the TED talks, and we debate when the machine will finally wake up and become smarter than all of us combined. It's the blockbuster movie version of the future, complete with a dramatic, world-altering climax.
+
+<!--more-->
 
 It's also a complete head fake.
 
@@ -65,7 +65,6 @@ The company's process has become profoundly dumber. It has lost all nuance. But 
 
 ![Aviva AI Implementation Results](/img/asiagi/pic5.png)
 
-
 ### The Corporate Buyer
 
 A skilled procurement officer builds relationships with suppliers. They negotiate long-term deals, anticipate supply chain disruptions, and make strategic choices that aren't just about the lowest price today.
@@ -100,7 +99,6 @@ McKinsey's 2024 research found that the average worker has about an hour of dail
 
 MIT researchers project that AI will replace 2 million manufacturing workers by 2025. Customer service? 80% automation potential. These aren't far-off predictions—we're already in 2025, and these workers are already being let go.
 
-
 ## Why "Good Enough" Beats "Perfect"
 
 Now, I need to add some nuance here, because the real story is messier than my stark examples suggest.
@@ -114,7 +112,6 @@ And most companies aren't going full scorched-earth on their workforce. The patt
 So while the philosophers and futurists debate the consciousness of a hypothetical ASI, the real revolution is already happening in the back offices of insurance companies, logistics firms, and corporate finance departments. They aren't waiting for AI to get smarter. They're busy redesigning their companies to be dumber.
 
 ![The Real Revolution](/img/asiagi/pic4.png)
-
 
 The regulatory landscape might slow this down. Auto-denying insurance claims based on keyword matching would face scrutiny in most markets. Reputation matters. Customer experience matters. But the economic incentive is overwhelming, and companies are testing the boundaries of what they can get away with.
 

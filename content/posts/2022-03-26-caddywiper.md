@@ -17,7 +17,10 @@ categories:
 - Security
 ---
 
-# Analysis of a Caddy Wiper Sample
+According to the Twitter post by ESET the wiper is deployed by group policy to the infected system. Once run, as administrator, the system will crash and the following screen will be displayed.
+Once the computer is rebooted it crashes and will not start anymore and prompt that it cannot locate the operating system.
+
+<!--more-->
 
 ## Introduction
 
@@ -25,7 +28,7 @@ CaddyWiper was first [reported](https://www.welivesecurity.com/2022/03/15/caddyw
 
 > Dubbed CaddyWiper by ESET analysts, the malware was first detected at 11.38 a.m. local time (9.38 a.m. UTC) on Monday. The wiper, which destroys user data and partition information from attached drives, was spotted on several dozen systems in a limited number of organizations. It is detected by ESET products as Win32/KillDisk.NCX.
 
-One of my friends pinged me a few days later with [a link](https://bazaar.abuse.ch/download/a294620543334a721a2ae8eaaf9680a0786f4b9a216d75b55cfd28f39e9430ea/) to a CaddyWiper sample. Since this sample was a particularly small one, I decided to write a blog post going through each function from scratch and introducing the tools I used to make my life easier. Hopefully, this can serve as a reference to junior malware analysts who want to get started with this craft. 
+One of my friends pinged me a few days later with [a link](https://bazaar.abuse.ch/download/a294620543334a721a2ae8eaaf9680a0786f4b9a216d75b55cfd28f39e9430ea/) to a CaddyWiper sample. Since this sample was a particularly small one, I decided to write a blog post going through each function from scratch and introducing the tools I used to make my life easier. Hopefully, this can serve as a reference to junior malware analysts who want to get started with this craft.
 
 First off, I'm a Linux user myself and I use mainly Linux tools to analyse malware. `pev` is a set command-line utilities providing a high level analysis of a `PE` binary. It consists of the following tools
 
@@ -55,6 +58,7 @@ imphash:                         ea8609d4dad999f73ec4b6f8e7b28e55
 ```
 
 `readpe` result:
+
 ```
 DOS Header
     Magic number:                    0x5a4d (MZ)
@@ -207,6 +211,7 @@ typedef struct _DSROLE_PRIMARY_DOMAIN_INFO_BASIC {
   GUID                DomainGuid;
 } DSROLE_PRIMARY_DOMAIN_INFO_BASIC, *PDSROLE_PRIMARY_DOMAIN_INFO_BASIC;
 ```
+
 clearly the attack is interested in `MachineRole`, and compares it with value `5`. Let's dig deeper to see what `5` means. If we go to [this doc](https://docs.microsoft.com/en-us/windows/win32/api/dsrole/ne-dsrole-dsrole_machine_role), we'll see the following `enum`:
 
 ```cpp
@@ -232,7 +237,7 @@ let's go take a look at the `wiper` function. That's where the attacker's malici
 
 ## The wiper function
 
-The function itself is a `void` one. Meaning the attacker didn't really care if the wiping is successful or not. Reading a bit of the function itself, the first bit of interesting information is seen at line ~180. There seems to be another function, that gets called with both `*` and `\\` values. 
+The function itself is a `void` one. Meaning the attacker didn't really care if the wiping is successful or not. Reading a bit of the function itself, the first bit of interesting information is seen at line ~180. There seems to be another function, that gets called with both `*` and `\\` values.
 
 ![ghidra-wiper-1](/img/caddywiper/wiper-ghidra-1.png)
 
@@ -242,6 +247,7 @@ FUN_00402a80((int)local_89c,local_ccc,&local_e20);
 ```
 
 After digging around the `wipe` function, you can see `kernel32.dll` as a stack string with these functions being called from it (in order):
+
 ```
 FindFirstFileA
 FindNextFileA
@@ -303,23 +309,23 @@ AdjustTokenPrivileges
 GetLastError
 ```
 
-`FUN_00401750` simply tries to see if the malware has enough permission to change permissions on a file. I'll rename it to `priv_check`. 
+`FUN_00401750` simply tries to see if the malware has enough permission to change permissions on a file. I'll rename it to `priv_check`.
 
-As a result, based on my guess, `FUN_00401a10` is renamed to `priv_set` 
+As a result, based on my guess, `FUN_00401a10` is renamed to `priv_set`
 
 ## Putting it all together
 
 This is a small Malware sample, and it's effective and fast. In a nutshell, this is what the attack vector had in mind
 
-  - Checks if the Computer is a primary domain controller or not. If not, it leaves it behind and doesn't wipe it. 
-  - It identifies C:\Users and D: through Z: as primary attack targets
-  - Recursively:
-    - Finds the first file in the folder
-    - Tries to see the permission it has to write to the file
-    - Tries elevating privileges to gain permission to write to the file
-    - Opens the file in write mode
-    - rewrites the file header with gibberish
-    - Close the file
+- Checks if the Computer is a primary domain controller or not. If not, it leaves it behind and doesn't wipe it.
+- It identifies C:\Users and D: through Z: as primary attack targets
+- Recursively:
+  - Finds the first file in the folder
+  - Tries to see the permission it has to write to the file
+  - Tries elevating privileges to gain permission to write to the file
+  - Opens the file in write mode
+  - rewrites the file header with gibberish
+  - Close the file
 
 Interestingly, If you run the binary through something like the `strings` command, you'll only see a few strings, like so
 
@@ -334,11 +340,11 @@ DsRoleGetPrimaryDomainInformation
 NETAPI32.dll
 ```
 
-This is because the attacker is making use of `stack strings`. [This link](https://rioasmara.com/2020/10/20/evade-strings-detection-with-stack-based/) has a good explanation of what are stack strings and how are they used to avoid detection. 
+This is because the attacker is making use of `stack strings`. [This link](https://rioasmara.com/2020/10/20/evade-strings-detection-with-stack-based/) has a good explanation of what are stack strings and how are they used to avoid detection.
 
-## Detection 
+## Detection
 
-The easiest detection for this particular sample could be a hash value. But since this malware is small, hashes, even `ssdeep` are not a very good idea. Let's try to build a YARA rule that defines what we learned from the malware. 
+The easiest detection for this particular sample could be a hash value. But since this malware is small, hashes, even `ssdeep` are not a very good idea. Let's try to build a YARA rule that defines what we learned from the malware.
 
 ```c
 rule caddywiper {
@@ -364,8 +370,8 @@ rule caddywiper {
 }
 ```
 
-As we saw, since the attacker was clever enough to use Stack String, our YARA rule is going to be slow and regex-y but it still works. Interestingly, for `WriteFile` and `FindClose` I had to adjust my regex to factor in the slightly smaller `MOV` assembly code. I've also put a file size cap on the sample to ignore potentially different variants of this malware. 
+As we saw, since the attacker was clever enough to use Stack String, our YARA rule is going to be slow and regex-y but it still works. Interestingly, for `WriteFile` and `FindClose` I had to adjust my regex to factor in the slightly smaller `MOV` assembly code. I've also put a file size cap on the sample to ignore potentially different variants of this malware.
 
-As an exercise, you can create similar detection for the `dll` files, which are a bit trickier considering they're both `wide` strings and Stack Strings. 
+As an exercise, you can create similar detection for the `dll` files, which are a bit trickier considering they're both `wide` strings and Stack Strings.
 
 Hope you enjoyed this brief analysis. I'll put the Ghidra zipped file alongside the scripts, comments etc in a Github Repo if anyone is interested. Let me know what Malware should I dissect next :)

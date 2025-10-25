@@ -13,6 +13,12 @@ categories:
 - misc
 ---
 
+
+
+2022 was an interesting year for me. Compared to 2021 and 2020, it was one of the quieter years of my infosec career, even though the noise and hype around every single vulnerability, "breach", and leak were immense. I decided to focus less on the news, and spend a bit of my 2022 grasping the fundamentals. I also chose a book as the preferred medium since I find it easier to sit down and read than to open a browser tab and get lost in my lack of concentration. I went through at least 20 publications over the past 12 months; some were long blog posts, some were documentation and RFCs and some were published books. In this blog post, I'll try to rate/rank the top ones I read and give a paragraph on the pros/cons.
+
+<!--more-->
+
 {{< rawhtml >}}
     <br>
     <audio controls>
@@ -21,10 +27,6 @@ categories:
     </audio>
     <br>
 {{< /rawhtml >}}
-
-# Introduction
-
-2022 was an interesting year for me. Compared to 2021 and 2020, it was one of the quieter years of my infosec career, even though the noise and hype around every single vulnerability, "breach", and leak were immense. I decided to focus less on the news, and spend a bit of my 2022 grasping the fundamentals. I also chose a book as the preferred medium since I find it easier to sit down and read than to open a browser tab and get lost in my lack of concentration. I went through at least 20 publications over the past 12 months; some were long blog posts, some were documentation and RFCs and some were published books. In this blog post, I'll try to rate/rank the top ones I read and give a paragraph on the pros/cons.
 
 ## 10, Black Hat Go (ISBN: 9781593278656)
 
@@ -67,7 +69,6 @@ As a person, there's an Ali before reading this book, and there's an Ali after r
 ## 1, Basic Economics (ISBN: 9780465060733)
 
 I was not a huge reader, so I haven't read hundreds and hundreds of books before. But so far, none of the books that I've read has changed my mind about so many things at once like this book. This book is biased toward a free-market economy, and it makes a damn good case for it. I do not see politics, public figures, Bitcoin, and a whole range of world economics the same way again. As a person who grew up in a soviet-style run economy, and then moved to the free market of New Zealand; this book fully explained why NZ is leading a better life, and why some economies are better than others. It's quite a long read but if you want to learn economy, this is the one book you must read. can't recommend it enough.
-
 
 # Looking forward to 2023
 

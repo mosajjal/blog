@@ -10,8 +10,13 @@ images:
 - /img/ai/catch-a-rising-ai-star.jpg
 description: Why Your Current Strategy is Already Obsolete and How to Catch the Rising Stars Before They Leave You Behind
 categories:
-- misc
+- AI
 ---
+
+If your day-to-day life is primarily behind your monitor and keyboard, this article is for you. AI is coming fast for our jobs, and most of us are not as alarmed as we should be, nor know what to do about it. I've spent the last 12 months digging deeper and deeper into Generative AI, spent 100s of hours building tools with all the "standard" architectures, and I've come to some conclusions that I'd like to share with the rest of us. I'm hoping this gives you the point of view that I think we should all have.
+How Good is Generative AI, really?
+
+<!--more-->
 
 {{< rawhtml >}}
     <br>
@@ -21,9 +26,6 @@ categories:
     </audio>
     <br>
 {{< /rawhtml >}}
-
-If your day-to-day life is primarily behind your monitor and keyboard, this article is for you. AI is coming fast for our jobs, and most of us are not as alarmed as we should be, nor know what to do about it. I've spent the last 12 months digging deeper and deeper into Generative AI, spent 100s of hours building tools with all the "standard" architectures, and I've come to some conclusions that I'd like to share with the rest of us. I'm hoping this gives you the point of view that I think we should all have.
-How Good is Generative AI, really?
 
 When I got invited into Github Copilot's private preview in 2021, I immediately jumped in and got to testing. It was built on top of Codex, which was a "modified" version of GPT3. It had a lot of limitations, it didn't understand your code properly, and it was more of a distraction than a useful feature. It also didn't understand your codebase, so you were incentivized to build your code in giant one-filers. When I was working on anything serious at that time, I would turn off my copilot so I could focus and not get distracted by the constant wrong and/or out-of-context suggestions.
 
@@ -49,7 +51,7 @@ In just under a year, almost every single one of these issues is not only elimin
 
 - Tool Use / Function Calling (sometimes referred to as Model Context Protocol or MCP): Getting AI to use other tools is getting way easier, and this capability is huge. Props to Anthropic for pushing powerful APIs for this, and it's awesome how the whole AI world jumped on board, building similar capabilities. This gives AI arms and legs to actually do things. I will refer to this as "Models can now act on your behalf."
 
-- Context caching and long context windows: The models went from 64k token context window, to 2M. This means that you can ask a question from an AI agent, and have it read a few books while it's answering your question. This alone has helped the coding agents to become very reliable. I will refer to this as "Models know your requirements." 
+- Context caching and long context windows: The models went from 64k token context window, to 2M. This means that you can ask a question from an AI agent, and have it read a few books while it's answering your question. This alone has helped the coding agents to become very reliable. I will refer to this as "Models know your requirements."
 
 As you can see, within 12 months, AI went from a fun party trick to a serious product. AI companies famously don't make good money. But I think that's about to change.
 What does good AI mean for me and my company?
@@ -70,11 +72,11 @@ This is going to be a hot take. In essence, Vector Databases are non-intelligent
 
 To understand RAG and MCP, I always make the example of going to the doctor to get diagnosed. Let's imagine you're going to a diagnostician with a headache. The doctor (SOTA model) is very capable and knows what he's doing, but he cannot remember every single patient's medical history. So how do we set up this doctor's office to make sure the medical history is available? There are two main options:
 
-Hire an assistant (RAG): 
+Hire an assistant (RAG):
 
 We put a middleman before going to the doctors. First, you go to the assistant, give it your name and information, and it will write down all your relevant medical history on a piece of paper. Hands it to you, and tells you to show it to the doctor when you arrive. Remember, this is not your full medical history, but only the stuff that the assistant finds "relevant" to your headache. It might even be another patient's data since this assistant is really disorganized.
 
-Teach the doctor how to use a computer (MCP/CAG): 
+Teach the doctor how to use a computer (MCP/CAG):
 
 In this approach, you will visit the doctor first, and the doctor asks for your information. Then, the doctor will search your name inside the patient record database and pull the info they need to make an informed decision. After your diagnosis, the doctor then writes back your latest visit to the same database and sends you home.
 
@@ -82,30 +84,30 @@ Not only is MCP a clear winner in this scenario, but it also has another advanta
 
 From the RAG architecture, I intentionally left out one segment: Data Chunking. While some RAG parts can be replaced by MCP, some parts of it are still essential. Data Chunking is one of them. Data Chunking allows your CAG costs to remain low, while giving you the ability to invalidate the caches of irrelevant data cheaply and quickly. There's an awesome article in AWS talking through RAG vs CAG and why CAG is gaining momentum:
 
-https://community.aws/content/2v0HnXk5EuYF28u8G6WP9PI7kRL/rag-vs-cag-navigating-the-evolving-landscape-of-llm-knowledge-augmentation-on-aws
+<https://community.aws/content/2v0HnXk5EuYF28u8G6WP9PI7kRL/rag-vs-cag-navigating-the-evolving-landscape-of-llm-knowledge-augmentation-on-aws>
 
 In particular, I would like to draw your attention to the 3 drawbacks of CAG, and why my previous comments around the advancements of AI are crucial:
 
-Context Window Limits: 
+Context Window Limits:
 
 CAG is limited by the LLM's context window size. As mentioned above, context window is always growing, and it's always a safe bet to assume 2-4M context windows are readily available. For extremely large document libraries, correct chunking will help solve this issue.
 
-Cache Invalidation Cost: 
+Cache Invalidation Cost:
 
 AIs are getting cheaper by the day, so this cost is bound to go down. Chunking allows you to invalidate parts of your context, not all, and help reduce this overhead.
 
-"Cold Start" Latency: 
+"Cold Start" Latency:
 
 This time has been reduced over time. Moreover, RAG complexity and concurrent user scalability also creates significant latencies. Chunking keeps your context shorter which helps with this as well.
 Reasoning models are over-thinkers
 
 In 2025, Models are used in two main categories:
 
-Suggestion: 
+Suggestion:
 
 Chatbots, code completion, text summary, CAG/RAG.
 
-Acting: 
+Acting:
 
 AI Agents, MCP Clients, Code Execution, REPL.
 
