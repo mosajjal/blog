@@ -5,7 +5,7 @@ title = "n0p Blog"                                   # website title
 theme = "LoveIt"                                         # theme
 enableGitInfo = false                                    # whether to use git commit log to generate lastmod record
 hasCJKLanguage = false                                   # whether to include chinese/japanese/korean
-paginate = 12                                            # default amount of posts in each pages
+pagination.pagerSize = 12                                            # default amount of posts in each pages
 enableEmoji = true                                       # whether to use emoji code
 enableRobotsTXT = true                                   # whether to use robots.txt
 copyright = "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License."
@@ -28,7 +28,7 @@ staticDir = ["static", "../assets/others"]               # static directories
   priority = 0.5
 
 [Permalinks]                                          #### Permalinks Info (https://gohugo.io/content-management/urls/#permalinks)
-  posts = ":year/:month/:filename"
+  posts = ":year/:month/:contentbasename"
 
 [menu]                                                #### Menu Info
   [[menu.main]]
@@ -304,7 +304,6 @@ staticDir = ["static", "../assets/others"]               # static directories
   page = ["HTML", "MarkDown"]
   section = ["HTML", "RSS"]
   taxonomy = ["HTML", "RSS"]
-  taxonomyTerm = ["HTML"]
 
 [markup]
   # Syntax Highlighting (https://gohugo.io/content-management/syntax-highlighting)
