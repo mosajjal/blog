@@ -19,6 +19,8 @@ keywords:
 - config-secret
 - forticrack
 description: 'A single static Go binary that decrypts and unpacks FortiOS firmware end to end, plus the FortiOS 7.4 config-secret key nobody had published before this.'
+images:
+- /img/fortitool-fortios-decryption/titlepic.png
 categories:
 - Reverse Engineering
 ---
@@ -26,6 +28,8 @@ categories:
 I own an FWF-60E and I've spent a good chunk of time pulling its firmware apart to see what's actually in there. FortiOS doesn't do casual encryption. The whole `.out` file sits under an outer XOR layer, and the filesystem image buried inside that has its own second scheme, which has changed shape several times across versions. None of this is exactly secret. Researchers have been chipping away at it for years. But every writeup solves one slice and then leaves you to stitch the rest together on your own.
 
 <!--more-->
+
+![fortitool: cracking FortiOS firmware end to end, and a key nobody had](/img/fortitool-fortios-decryption/titlepic.png)
 
 ## The tooling problem
 
