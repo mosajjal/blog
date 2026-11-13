@@ -16,10 +16,12 @@ categories:
 
 
 
-The Amazon Simple Storage Service (S3) API has become the de facto industry standard for object storage, creating a robust ecosystem of tools, SDKs, and services built around its interface.1 This has spurred the emergence of numerous "S3-compatible" storage providers, each offering a unique value proposition. However, the term "S3-compatible" represents a wide spectrum of functionality, ranging from near-perfect replication of core data operations to significant deficiencies in advanced management and security features. This report provides a detailed comparative analysis of leading S3-compatible providers—Cloudflare R2, Hetzner Object Storage, Vultr Object Storage, and DigitalOcean Spaces—benchmarked against the comprehensive capabilities of AWS S3.
+The Amazon Simple Storage Service (S3) API has become the de facto industry standard for object storage, creating a robust ecosystem of tools, SDKs, and services built around its interface.1 This has spurred the emergence of numerous "S3-compatible" storage providers, each offering a unique value proposition. However, the term "S3-compatible" represents a wide spectrum of functionality, ranging from near-perfect replication of core data operations to significant deficiencies in advanced management and security features. This report provides a detailed comparative analysis of leading S3-compatible providers—Cloudflare R2, Hetzner Object Storage, Vultr Object Storage, DigitalOcean Spaces, and STRG—benchmarked against the comprehensive capabilities of AWS S3.
 
 <!--more-->
 Note: This article is written with the help of AI. There might be discrepancies in the information provided.
+
+Update (November 2026): added STRG to the comparison, based on its public documentation.
 
 The key findings of this analysis reveal a market defined by strategic trade-offs:
 
@@ -32,6 +34,8 @@ The key findings of this analysis reveal a market defined by strategic trade-off
 - **Vultr Object Storage** offers a transparent, well-documented subset of S3 features. It strikes a balance between core functionality and simplicity but notably lacks automated lifecycle management, shifting operational responsibility to the user.10
 
 - **DigitalOcean Spaces** provides a developer-centric, API-first implementation with a unique built-in Content Delivery Network (CDN). Its compatibility is partial, with documented limitations in areas like Access Control Lists (ACLs) and lifecycle rules, tailoring it for web asset delivery.12
+
+- **STRG** bills for stored data only, with no request or egress charges. Its S3 surface is small and built around always-on versioning, Object Lock and lifecycle expiry. It has no bucket policies, tags, replication or logging, and it runs in two regions.
 
 Ultimately, the optimal choice of an object storage provider is highly dependent on the specific use case. A decision must weigh factors such as the need for egress-heavy content delivery, long-term compliant archiving, simple static asset storage, or the comprehensive management ecosystem required for complex, enterprise-scale applications.
 
@@ -203,81 +207,118 @@ A major strategic advantage of DigitalOcean Spaces is its built-in, globally dis
 
 DigitalOcean Spaces embodies a distinct product philosophy. It is not attempting to be a comprehensive, general-purpose replacement for S3. Instead, it is a specialized and opinionated solution tailored for the extremely common use case of storing and delivering static web assets. The feature set is optimized for this purpose: the integrated CDN is the centerpiece, and the simplified `private`/`public-read` ACLs are perfectly sufficient for managing web content. The API-first approach to advanced features caters directly to its target audience of developers who automate their infrastructure. Migrating a web application's asset storage from S3 and CloudFront to Spaces could significantly simplify the architecture. Conversely, attempting to use Spaces for a data lake with complex, granular permissions and tag-based archiving would be an exercise in working against the product's design.
 
-## Section 6: Comparative Analysis and Feature Matrix
+## Section 6: Provider Deep Dive - STRG
+
+STRG is the smallest provider in this comparison. It runs two regions (US East and EU Central), offers one storage class, and bills for stored data only. Its pitch is that there is less to configure, and the S3 API it exposes follows from that.
+
+### 6.1 Pricing Model: Stored Data Only
+
+Requests, uploads and downloads are free. The only line on the invoice is stored data, which goes a step further than R2: R2 drops egress fees but still charges per request.
+
+The catch is in what counts as stored. Buckets are always versioned, so an overwritten or deleted object keeps costing money until its old versions are removed, and so does an unfinished multipart upload. A lifecycle rule that deletes previous versions after a set number of days is close to mandatory. A card also has to be on file before the first bucket or access key can be created.
+
+### 6.2 What the S3 API Covers
+
+The data plane is complete: object reads and writes, copies, batch deletes, both list calls, version listing, the full multipart set including `UploadPartCopy`, presigned URLs valid for up to seven days, and trailing checksums.
+
+The management plane is much narrower than AWS, but it covers the parts a backup target needs.
+
+- Versioning is always on and can't be suspended. `PutBucketVersioning` accepts `Enabled` and refuses `Suspended`.
+- Lifecycle rules go through the standard `PutBucketLifecycleConfiguration` call, so existing Terraform or CLI automation carries over. A rule can expire current versions, delete previous versions and abort incomplete multipart uploads, filtered by prefix and counted in days. Transitions, tag filters and size filters aren't available (with one storage class there is nothing to transition to).
+- Object Lock has governance mode, compliance mode, legal holds and a default retention per bucket. It differs from AWS in two ways: it is enabled with a second call after the bucket exists instead of at creation, and it can never be switched off.
+- Every bucket is encrypted at rest with AES-256 under provider-managed keys, and SSE-C is accepted per request. There is no SSE-KMS.
+
+### 6.3 What Is Missing
+
+There are no bucket policies, no object or bucket tags, no replication, access logging, inventory, event notifications or static website hosting. ACLs come down to one switch per bucket, `private` or `public-read`, and objects inherit it. A public bucket serves objects by URL, but it can't be listed anonymously and has no index document support.
+
+Access is controlled per access key instead. A key can be limited to specific buckets, to an object prefix and to a set of permissions, which handles the usual "one key per application" setup without a policy language. Temporary credentials are another matter: STRG has no session tokens, so anything built on short-lived STS-style credentials has to be redesigned. Browser form uploads with a POST policy aren't supported either, and presigned `PUT` URLs are the replacement.
+
+Two gaps will bite specific tools. Conditional writes (`If-Match` and `If-None-Match` on uploads) aren't implemented, and some tools use them for locking, Terraform's S3-native state lock among them. Each regional endpoint also only knows its own buckets, so a client pointed at the wrong region is told the bucket doesn't exist where AWS would redirect it, and `CopyObject` can't cross regions.
+
+STRG does fail clearly. An unsupported operation returns `501 NotImplemented` rather than being silently accepted, and read-only probes such as `GetBucketPolicy` or `GetBucketTagging` answer the way AWS does for a bucket that was never configured, so tools that check those settings on startup keep working. The [documentation](https://docs.strg.com/s3-api/overview) lists every supported operation and how each one differs from AWS.
+
+### 6.4 Agents as Users
+
+STRG ships an MCP server and a dashboard assistant, so an AI agent can create buckets, manage keys and move objects without an SDK. Access keys carry separate permissions for that, including whether the agent must ask before an operation that can't be undone. For a nightly backup job none of this matters. It does if you plan to hand storage to an agent.
+
+STRG suits versioned backups with retention: versioning that can't be turned off, Object Lock, lifecycle expiry through the standard API, and no egress bill on the day you restore. It is a poor fit for anything that needs policies, tags, event notifications or more than two regions. Its documentation also publishes no durability or uptime figures, so check that before trusting it with a sole copy.
+
+## Section 7: Comparative Analysis and Feature Matrix
 
 To synthesize the detailed findings from the provider deep dives, the following tables provide an at-a-glance comparison of features and API compatibility. These matrices are designed to serve both strategic decision-makers and technical implementers in evaluating the suitability of each provider for their specific needs.
 
-### 6.1 Table 1: High-Level Feature Capability Matrix
+### 7.1 Table 1: High-Level Feature Capability Matrix
 
 This table offers a strategic overview of major features, allowing for rapid assessment based on high-level requirements.
 
-| **Feature**                | **AWS S3**         | **Cloudflare R2**       | **Hetzner Object Storage** | **Vultr Object Storage** | **DigitalOcean Spaces** |
-| -------------------------- | ------------------ | ----------------------- | -------------------------- | ------------------------ | ----------------------- |
-| **Object Versioning**      | ✅ Full Support     | ❌ Not Supported         | ✅ Full Support             | ✅ Full Support           | 💻 API Only              |
-| **Lifecycle Management**   | ✅ Full Support     | 🟡 Limited (UI Only)     | 🟡 Limited (Expiry Only)    | ❌ Not Supported          | 💻 API Only (Limited)    |
-| **Object Lock**            | ✅ Full Support     | ❌ Not Supported         | ✅ Full Support             | ❌ Not Supported          | ❌ Not Supported         |
-| **Static Website Hosting** | ✅ Full Support     | 🟡 Limited (via Workers) | ❌ Not Supported            | ❌ Not Supported          | ✅ Full Support          |
-| **Bucket Replication**     | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ❌ Not Supported          | ❌ Not Supported         |
-| **Bucket Logging**         | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ❌ Not Supported          | 💻 API Only              |
-| **Bucket Inventory**       | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ❌ Not Supported          | ❌ Not Supported         |
-| **Object Tagging**         | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ✅ Full Support           | ❌ Not Supported         |
-| **Granular ACLs**          | ✅ Full Support     | ❌ Not Supported         | 🟡 Limited                  | ✅ Full Support           | 🟡 Limited               |
-| **Bucket Policies**        | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ✅ Full Support           | 💻 API Only              |
-| **Server-Side Encryption** | ✅ SSE-S3, KMS, C   | ✅ Automatic             | 🟡 SSE-C Only               | ❌ Not Supported          | 🟡 SSE-C Only            |
-| **Integrated CDN**         | ✅ (via CloudFront) | ✅ (Native)              | ❌ Not Supported            | ✅ (via Vultr CDN)        | ✅ (Built-in)            |
+| **Feature**                | **AWS S3**         | **Cloudflare R2**       | **Hetzner Object Storage** | **Vultr Object Storage** | **DigitalOcean Spaces** | **STRG** |
+| -------------------------- | ------------------ | ----------------------- | -------------------------- | ------------------------ | ----------------------- | ---------------- |
+| **Object Versioning**      | ✅ Full Support     | ❌ Not Supported         | ✅ Full Support             | ✅ Full Support           | 💻 API Only              | ✅ Always On |
+| **Lifecycle Management**   | ✅ Full Support     | 🟡 Limited (UI Only)     | 🟡 Limited (Expiry Only)    | ❌ Not Supported          | 💻 API Only (Limited)    | 🟡 Limited (Expiry Only) |
+| **Object Lock**            | ✅ Full Support     | ❌ Not Supported         | ✅ Full Support             | ❌ Not Supported          | ❌ Not Supported         | ✅ Full Support |
+| **Static Website Hosting** | ✅ Full Support     | 🟡 Limited (via Workers) | ❌ Not Supported            | ❌ Not Supported          | ✅ Full Support          | ❌ Not Supported |
+| **Bucket Replication**     | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ❌ Not Supported          | ❌ Not Supported         | ❌ Not Supported |
+| **Bucket Logging**         | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ❌ Not Supported          | 💻 API Only              | ❌ Not Supported |
+| **Bucket Inventory**       | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ❌ Not Supported          | ❌ Not Supported         | ❌ Not Supported |
+| **Object Tagging**         | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ✅ Full Support           | ❌ Not Supported         | ❌ Not Supported |
+| **Granular ACLs**          | ✅ Full Support     | ❌ Not Supported         | 🟡 Limited                  | ✅ Full Support           | 🟡 Limited               | 🟡 Limited |
+| **Bucket Policies**        | ✅ Full Support     | ❌ Not Supported         | ❌ Not Supported            | ✅ Full Support           | 💻 API Only              | ❌ Not Supported |
+| **Server-Side Encryption** | ✅ SSE-S3, KMS, C   | ✅ Automatic             | 🟡 SSE-C Only               | ❌ Not Supported          | 🟡 SSE-C Only            | ✅ Automatic, SSE-C |
+| **Integrated CDN**         | ✅ (via CloudFront) | ✅ (Native)              | ❌ Not Supported            | ✅ (via Vultr CDN)        | ✅ (Built-in)            | ❌ Not Supported |
 
 _Key: ✅ Supported; 🟡 Partial/Limited Support; ❌ Not Supported; 💻 API Only Configuration_
 
-### 6.2 Table 2: Bucket-Level API Operation Compatibility
+### 7.2 Table 2: Bucket-Level API Operation Compatibility
 
 This table details the compatibility of key management-plane API operations, which is critical for assessing the portability of automation and Infrastructure-as-Code.
 
-| **Bucket-Level API Call**         | **AWS S3 (Baseline)** | **Cloudflare R2** | **Hetzner**     | **Vultr**       | **DigitalOcean Spaces** |
-| --------------------------------- | --------------------- | ----------------- | --------------- | --------------- | ----------------------- |
-| `CreateBucket`                    | ✅ Supported           | ✅ Supported       | ✅ Supported     | ✅ Supported     | ✅ Supported             |
-| `DeleteBucket`                    | ✅ Supported           | ✅ Supported       | ✅ Supported     | ✅ Supported     | ✅ Supported             |
-| `ListBuckets`                     | ✅ Supported           | ✅ Supported       | ✅ Supported     | ✅ Supported     | ✅ Supported             |
-| `GetBucketAcl`                    | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ✅ Supported     | ✅ Supported             |
-| `PutBucketAcl`                    | ✅ Supported           | ❌ Not Supported   | 🟡 Limited       | ✅ Supported     | 🟡 Limited               |
-| `GetBucketLifecycleConfiguration` | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ❌ Not Supported | ✅ Supported             |
-| `PutBucketLifecycleConfiguration` | ✅ Supported           | ❌ Not Supported   | 🟡 Limited       | ❌ Not Supported | 🟡 Limited               |
-| `GetBucketReplication`            | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ❌ Not Supported         |
-| `PutBucketReplication`            | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ❌ Not Supported         |
-| `GetBucketTagging`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ✅ Supported     | ❌ Not Supported         |
-| `PutBucketTagging`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ✅ Supported     | ❌ Not Supported         |
-| `PutBucketPolicy`                 | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ✅ Supported     | ✅ Supported             |
-| `GetBucketLogging`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ✅ Supported             |
-| `PutBucketWebsite`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ✅ Supported             |
-| `GetBucketVersioning`             | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ✅ Supported     | ✅ Supported             |
-| `PutBucketVersioning`             | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ✅ Supported     | ✅ Supported             |
+| **Bucket-Level API Call**         | **AWS S3 (Baseline)** | **Cloudflare R2** | **Hetzner**     | **Vultr**       | **DigitalOcean Spaces** | **STRG** |
+| --------------------------------- | --------------------- | ----------------- | --------------- | --------------- | ----------------------- | ---------------- |
+| `CreateBucket`                    | ✅ Supported           | ✅ Supported       | ✅ Supported     | ✅ Supported     | ✅ Supported             | ✅ Supported |
+| `DeleteBucket`                    | ✅ Supported           | ✅ Supported       | ✅ Supported     | ✅ Supported     | ✅ Supported             | ✅ Supported |
+| `ListBuckets`                     | ✅ Supported           | ✅ Supported       | ✅ Supported     | ✅ Supported     | ✅ Supported             | ✅ Supported |
+| `GetBucketAcl`                    | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ✅ Supported     | ✅ Supported             | ✅ Supported |
+| `PutBucketAcl`                    | ✅ Supported           | ❌ Not Supported   | 🟡 Limited       | ✅ Supported     | 🟡 Limited               | 🟡 Limited |
+| `GetBucketLifecycleConfiguration` | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ❌ Not Supported | ✅ Supported             | ✅ Supported |
+| `PutBucketLifecycleConfiguration` | ✅ Supported           | ❌ Not Supported   | 🟡 Limited       | ❌ Not Supported | 🟡 Limited               | 🟡 Limited |
+| `GetBucketReplication`            | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ❌ Not Supported         | ❌ Not Supported |
+| `PutBucketReplication`            | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ❌ Not Supported         | ❌ Not Supported |
+| `GetBucketTagging`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ✅ Supported     | ❌ Not Supported         | 🟡 Always Empty |
+| `PutBucketTagging`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ✅ Supported     | ❌ Not Supported         | ❌ Not Supported |
+| `PutBucketPolicy`                 | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ✅ Supported     | ✅ Supported             | ❌ Not Supported |
+| `GetBucketLogging`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ✅ Supported             | ❌ Not Supported |
+| `PutBucketWebsite`                | ✅ Supported           | ❌ Not Supported   | ❌ Not Supported | ❌ Not Supported | ✅ Supported             | ❌ Not Supported |
+| `GetBucketVersioning`             | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ✅ Supported     | ✅ Supported             | ✅ Supported |
+| `PutBucketVersioning`             | ✅ Supported           | ❌ Not Supported   | ✅ Supported     | ✅ Supported     | ✅ Supported             | 🟡 Always Enabled |
 
-### 6.3 Table 3: Object-Level API Operation Compatibility
+### 7.3 Table 3: Object-Level API Operation Compatibility
 
 This table focuses on the data-plane operations that are fundamental to application logic for storing and retrieving objects.
 
-| **Object-Level API Call** | **AWS S3 (Baseline)** | **Cloudflare R2** | **Hetzner** | **Vultr**   | **DigitalOcean Spaces** |
-| ------------------------- | --------------------- | ----------------- | ----------- | ----------- | ----------------------- |
-| `GetObject`               | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `PutObject`               | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `DeleteObject`            | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `DeleteObjects`           | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `HeadObject`              | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `CopyObject`              | ✅ Supported           | ✅ Supported       | 🟡 Limited   | ✅ Supported | 🟡 No Cross-Region       |
-| `ListObjectsV2`           | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `CreateMultipartUpload`   | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `UploadPart`              | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `CompleteMultipartUpload` | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
-| `AbortMultipartUpload`    | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             |
+| **Object-Level API Call** | **AWS S3 (Baseline)** | **Cloudflare R2** | **Hetzner** | **Vultr**   | **DigitalOcean Spaces** | **STRG** |
+| ------------------------- | --------------------- | ----------------- | ----------- | ----------- | ----------------------- | ---------------- |
+| `GetObject`               | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `PutObject`               | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `DeleteObject`            | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `DeleteObjects`           | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `HeadObject`              | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `CopyObject`              | ✅ Supported           | ✅ Supported       | 🟡 Limited   | ✅ Supported | 🟡 No Cross-Region       | 🟡 No Cross-Region |
+| `ListObjectsV2`           | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `CreateMultipartUpload`   | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `UploadPart`              | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `CompleteMultipartUpload` | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
+| `AbortMultipartUpload`    | ✅ Supported           | ✅ Supported       | ✅ Supported | ✅ Supported | ✅ Supported             | ✅ Supported |
 
-## Section 7: Strategic Implications and Recommendations
+## Section 8: Strategic Implications and Recommendations
 
 The analysis of these object storage providers reveals that "S3-compatible" is not a monolithic standard but a marketing term that primarily refers to the data-plane API. True compatibility would encompass the management plane, the IAM security model, and the rich ecosystem of event-driven services, none of which any competitor fully replicates. This distinction has profound strategic implications for architecture, operations, and cost.
 
-### 7.1 Deconstructing "S3-Compatible": From API to Ecosystem
+### 8.1 Deconstructing "S3-Compatible": From API to Ecosystem
 
 The term "S3-compatible" often creates a false sense of 1:1 portability. While application code that performs simple `GET`, `PUT`, and `DELETE` operations can often be migrated by changing only an API endpoint, this represents a fraction of a complete cloud storage solution. The real cost and complexity of migration are found not in the application code but in re-architecting the surrounding operational, security, and cost-management automation. Any organization heavily invested in S3's management features—such as automated lifecycle policies managed via Terraform, security audits based on inventory reports, or serverless processing pipelines triggered by S3 event notifications—will find that these critical components are non-portable to most S3-compatible alternatives.
 
-### 7.2 Use-Case Suitability Analysis
+### 8.2 Use-Case Suitability Analysis
 
 The optimal choice of provider is dictated entirely by the specific workload. A one-size-fits-all recommendation is not feasible; instead, a use-case-driven approach is required.
 
@@ -289,9 +330,11 @@ The optimal choice of provider is dictated entirely by the specific workload. A 
 
 - **For Web Asset Hosting & Simplified CDN Architectures:** **DigitalOcean Spaces** is an excellent, purpose-built solution. The seamless integration of object storage with a global CDN can significantly simplify infrastructure and improve performance for websites and web applications, making it ideal for this specific and very common niche.
 
+- **For Versioned Backups With a Predictable Bill:** **STRG** charges for stored data and nothing else, keeps every version, and supports Object Lock and lifecycle expiry through the standard S3 API. The cost of that simplicity is two regions and no policies, tags or replication.
+
 - **For Complex, Enterprise-Grade Workloads:** **AWS S3** remains the only viable choice for applications that are deeply integrated with its entire ecosystem. Workloads that depend on the full range of storage classes, advanced tag-based lifecycle rules, cross-region replication, S3 Inventory, Batch Operations, and tight integration with other AWS services like Lambda and SQS will not find a comparable feature set elsewhere.
 
-### 7.3 Migration and Integration Gotchas
+### 8.3 Migration and Integration Gotchas
 
 When migrating from S3 or building for a multi-provider strategy, teams must be vigilant of several potential pitfalls:
 
